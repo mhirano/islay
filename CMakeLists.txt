@@ -39,6 +39,9 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 find_package(OpenCV REQUIRED)
 include_directories( ${OpenCV_INCLUDE_DIRS}  )
 
+# Qt
+find_package(Qt5 COMPONENTS Core REQUIRED)
+
 # Rendering
 find_package(SDL2 REQUIRED)
 find_package(GLFW REQUIRED)
@@ -93,4 +96,4 @@ target_link_libraries(imgui
 )
 
 add_executable(${PROJECT_NAME} src/main.cpp src/Application.cpp)
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES} imgui)
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES} Qt5::Core imgui)
