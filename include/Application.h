@@ -13,6 +13,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
+#include "imgui_apps.h"
 #include <stdio.h>
 #include <SDL.h>
 #include <string>
@@ -30,6 +31,8 @@
 #else
 #include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #endif
+
+
 
 class Application {
     SDL_Window* window;

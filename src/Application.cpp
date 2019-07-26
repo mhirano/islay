@@ -101,14 +101,12 @@ bool Application::run(){
 //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 //IM_ASSERT(font != NULL);
 
-    cv::Mat img = cv::imread("../res/lena.jpg");
-    cv::imshow("hoge", img);
-    cv::waitKey(5);
-
 // Our state
     bool show_demo_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    ExampleAppLog my_log;
 
 // Main loop
     bool done = false;
@@ -128,6 +126,7 @@ bool Application::run(){
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
                 done = true;
         }
+
 
 // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -152,14 +151,16 @@ bool Application::run(){
             ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
+            if (ImGui::Button("Button")){                           // Buttons return true when clicked (most widgets return true when edited/activated)
+                counter++; my_log.AddLog("hoge\n");}
             ImGui::SameLine();
             ImGui::Text("counter = %d", counter);
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
+
+
 
 // 3. Show another simple window.
         if (show_another_window)
@@ -170,6 +171,8 @@ bool Application::run(){
                 show_another_window = false;
             ImGui::End();
         }
+
+        my_log.Draw("title");
 
 // Rendering
         ImGui::Render();
