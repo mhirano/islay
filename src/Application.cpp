@@ -4,6 +4,7 @@
 
 #include "Application.h"
 
+
 Application::Application() {
 // Setup SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
@@ -70,8 +71,6 @@ Application::~Application(){
 
 bool Application::run(){
 
-
-
 // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -101,6 +100,10 @@ bool Application::run(){
 //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
 //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 //IM_ASSERT(font != NULL);
+
+    cv::Mat img = cv::imread("../res/lena.jpg");
+    cv::imshow("hoge", img);
+    cv::waitKey(5);
 
 // Our state
     bool show_demo_window = true;
@@ -176,7 +179,6 @@ bool Application::run(){
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
-
 
 }
 
