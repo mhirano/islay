@@ -6,7 +6,7 @@ project(imgui_barebone)
 if (UNIX AND NOT APPLE) #Ubuntu...
   message(STATUS ">>> Linux")
 
-  set(OpenCV_DIR /home/mhirano/opencv-3.4.1-tuned/build)
+  set(OpenCV_DIR /home/mhirano/opencv-4.1.1/build)
   set(Eigen_DIR /usr/include/eigen3)
   set(Qt5_DIR /opt/Qt/5.10.1/gcc_64)
   set(CMAKE_PREFIX_PATH ${Qt5_DIR})
@@ -89,11 +89,11 @@ add_library(imgui SHARED
 )
 set_source_files_properties(imgui/examples/libs/gl3w/GL/gl3w.c PROPERTIES COMPILE_FLAGS -Wno-pedantic)
 
-target_link_libraries(imgui
-  ${SDL2_LIBRARIES}
-  ${GLFW_LIBRARIES}
-  dl
-)
+if(UNIX AND NOT APPLE)
+  target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GL dl )
+else(APPLE)
+  target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} dl )
+endif()
 
 add_executable(${PROJECT_NAME} src/main.cpp src/Application.cpp)
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES} Qt5::Core imgui)
