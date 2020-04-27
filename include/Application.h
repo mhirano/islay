@@ -32,7 +32,7 @@
 #include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #endif
 
-
+#include "ImageTexture.h"
 
 class Application {
     SDL_Window* window;

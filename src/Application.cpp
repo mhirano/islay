@@ -160,7 +160,14 @@ bool Application::run(){
             ImGui::End();
         }
 
-
+        {
+            cv::Mat lena = cv::imread("../data/lena.png");
+            ImGui::Begin("ImageViewerTest");
+            ImageTexture* my_textures = new ImageTexture();
+            my_textures->setImage(&lena);
+            ImGui::Image(my_textures->getOpenglTexture(), my_textures->getSize());
+            ImGui::End();
+        }
 
 // 3. Show another simple window.
         if (show_another_window)
