@@ -8,7 +8,6 @@ if (UNIX AND NOT APPLE) #Ubuntu...
 
   set(OpenCV_DIR /home/mhirano/opencv-4.1.1/build)
   set(Eigen_DIR /usr/include/eigen3)
-  set(Qt5_DIR /opt/Qt/5.10.1/gcc_64)
   set(CMAKE_PREFIX_PATH ${Qt5_DIR})
 
   include_directories(/usr/include)
@@ -17,11 +16,9 @@ if (UNIX AND NOT APPLE) #Ubuntu...
 else(APPLE)
   message(STATUS ">>> Mac")
 
-  # If you installed Qt with homebrew and 'brew link --force qt5', you don't have to set QTDIR for find_package
-  # set(QTDIR /usr/local/Cellar/qt/5.10.0_1)
   # set(CMAKE_PREFIX_PATH ${QTDIR})
 
-  set(OpenCV_DIR /Users/mhirano/opencv-3.4.1-tuned/release)
+  set(OpenCV_DIR /Users/mhirano/opencv-4.3.0/build)
   set(Eigen_DIR /usr/local/include/eigen3)
 
   # Add include directory	(environemt specific)
@@ -38,9 +35,6 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # OpenCV
 find_package(OpenCV REQUIRED)
 include_directories( ${OpenCV_INCLUDE_DIRS}  )
-
-# Qt
-find_package(Qt5 COMPONENTS Core REQUIRED)
 
 # Rendering
 find_package(SDL2 REQUIRED)
@@ -71,7 +65,7 @@ else()
   message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler.")
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG -g -pg")
+set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG -g ")
 message(STATUS "${CMAKE_CXX_FLAGS_DEBUG}")
 set(CMAKE_CXX_FLAGS_RELEASE "-DRELEASE -O3 -DNDEBUG -march=native")
 message(STATUS "${CMAKE_CXX_FLAGS_RELEASE}")
@@ -96,4 +90,4 @@ else(APPLE)
 endif()
 
 add_executable(${PROJECT_NAME} src/main.cpp src/Application.cpp)
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES} Qt5::Core imgui)
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES} imgui)
