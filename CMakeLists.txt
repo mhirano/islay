@@ -1,40 +1,13 @@
-cmake_minimum_required(VERSION 3.5)
-project(imgui_barebone)
-
-
-#### Environment
-if (UNIX AND NOT APPLE) #Ubuntu...
-  message(STATUS ">>> Linux")
-
-  set(OpenCV_DIR /home/mhirano/opencv-4.1.1/build)
-  set(Eigen_DIR /usr/include/eigen3)
-  set(CMAKE_PREFIX_PATH ${Qt5_DIR})
-
-  include_directories(/usr/include)
-  link_directories(/usr/lib/x86_64-linux-gnu)
-
-else(APPLE)
-  message(STATUS ">>> Mac")
-
-  # set(CMAKE_PREFIX_PATH ${QTDIR})
-
-  set(OpenCV_DIR /Users/mhirano/opencv-4.3.0/build)
-  set(Eigen_DIR /usr/local/include/eigen3)
-
-  # Add include directory	(environemt specific)
-  include_directories(/usr/local/include)
-
-  # Add library directory
-  # link_directories(/usr/local/Cellar/fftw/3.3.6-pl2/lib) # fftw3 via homebrew
-
-endif()
+cmake_minimum_required(VERSION 3.10)
+project(islay)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 # OpenCV
-find_package(OpenCV REQUIRED)
-include_directories( ${OpenCV_INCLUDE_DIRS}  )
+find_package(OpenCV REQUIRED HINTS ${OpenCV_DIR})
+include_directories(${PROJECT_NAME} ${OpenCV_INCLUDE_DIRS} )
+set(OpenCV_DIR "" CACHE PATH "OpenCV install path")
 
 # Rendering
 find_package(SDL2 REQUIRED)
