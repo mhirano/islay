@@ -1,15 +1,16 @@
 # islay – A versatile framework for computer vision research
 ### About
-based on Dear ImGui 
+**islay** is a easy-to-use visually-aesthetic framework for computer vision and image processing researches based on Dear ImGui.
 
 Use imgui https://github.com/ocornut/imgui with cmake, opencv, opengl 3, sdl2
 
-- Islay is designed to be cross-platform.
+**islay** is designed to be cross-platform.
 
 ### How to Install
 #### 1. Install dependencies
 ##### For Ubuntu users:
-- OpenCV for image processing
+- OpenCV for image processing  
+Install OpenCV as you like.
 - Dependencies for Dear ImGui  
     - SDL2 for OpenGL library
     - GLFW for OpenGL library
@@ -25,7 +26,7 @@ $ sudo apt install -y libglm-dev
 ##### For Mac users
 *Homebrew* is a awesome package manager for Mac. Visit `https://brew.sh/index_ja` to install Homebrew.
 - OpenCV for image processing  
-
+Install OpenCV as you like.
 - Dependencies for Dear ImGui  
     - SDL2 for OpenGL library
     - GLFW for OpenGL library
@@ -37,23 +38,7 @@ $ brew install glm
 ```
 
 #### 2. Configure CMakeLists.txt
-Replace following pathes for your environment.
-|Name|Value|
-----|----
-|`OPENCV_EXTRA_MODULES_PATH`|`/path_to_your_contrib_module/`|
-|`IPPROOT`|`/path_to_your_IPP_root_directory`|
-|`WITH_IPP`|:white_square_button: (checked)|
-|`BUILD_WITH_DYNAMIC_IPP`|:white_square_button: (checked)|
-|`MKL_ROOT_DIR`|`/path_to_your_MKL_root_directory/`|
-|`MKL_INCLUDE_DIRS`|`/path_to_your_MKL_include_directory/`|
-|`MKL_WITH_TBB`|:white_square_button: (checked)|
-|`WITH_TBB`|:white_square_button: (checked)|
-|`TBB_ENV_INCLUDE`|`/path_to_your_TBB_include_directory`|
-|`TBB_ENV_LIB`|`/path_to_your_libtbb.so/`|
-|`TBB_ENV_LIB_DEBUG`|`/path_to_your_libtbb_debug.so/`|
-|`WITH_VTK`|:white_square_button: (checked)|
-|`VTK_DIR`|`/path_to_your_vtk_directory`|
-
+Use `cmake-gui` is a easy way to go.  Set `OpenCV_DIR` to your OpenCV's installation (or build) directory and configure & generate.
 
 #### 3. Build
 ```Shell
@@ -64,7 +49,7 @@ $ cmake ..
 $ make
 ```
 
-Now you are ready to drink;)
+Now you are ready to drink it neat;)
    
 ### Contact
  masahiro.dll_at_gmail.com (replace `_at_` with `@`)
