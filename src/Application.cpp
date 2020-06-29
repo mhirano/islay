@@ -3,6 +3,9 @@
 //
 
 #include "Application.h"
+#include <opencv2/opencv.hpp>
+#include "imgui_apps.h"
+
 #include "AppMsg.h"
 #include "Engine.h"
 #include "ImageTexture.h"
@@ -39,7 +42,11 @@ Application::Application() {
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    window = SDL_CreateWindow("islay", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+#ifdef DEBUG
+    window = SDL_CreateWindow("islay - debug", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1440, 1080, window_flags);
+#else
+    window = SDL_CreateWindow("islay", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1440, 1080, window_flags);
+#endif
     gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
     SDL_GL_SetSwapInterval(1); // Enable vsync
@@ -143,14 +150,6 @@ bool Application::run(){
         ImGui_ImplSDL2_NewFrame(window);
         ImGui::NewFrame();
 
-// Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-        {
-            static float f = 0.0f;
-            ImGui::Begin("GUI");
-            ImGui::Text("GUI runs at %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            ImGui::End();
-        }
-
 // Commands
         {
             ImGui::Begin("Commands");
@@ -187,6 +186,20 @@ bool Application::run(){
 
         {
             DrawJsonConfig("config", Config::get_instance().getDocument());
+        }
+
+        {
+            const float DISTANCE = 10.0f;
+            static float f = 0.0f;
+            ImVec2 window_pos = ImVec2(DISTANCE, DISTANCE);
+            ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
+            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+            ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+            if (ImGui::Begin("GUI", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+            {
+                ImGui::Text("GUI runs at %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            }
+            ImGui::End();
         }
 
 // Rendering

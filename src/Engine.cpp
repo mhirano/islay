@@ -7,12 +7,17 @@
 #include "Config.h"
 
 bool EngineOffline::run() {
-    Config::get_instance().saveConfig();
 
     worker = std::thread([this] {
+        /*
+         * Save config file as of run experiment
+         */
+        Config::get_instance().saveConfig();
+
         /**
          * Main process
          * - You write your algorithm here.
+         * - You can access to config parameters via Config::get_instance().readXYZParam("PARAM"); (set functions are not thread safe for now)
          */
         cv::Mat lena(Config::get_instance().readIntParam("IMAGE_WIDTH"),
                      Config::get_instance().readIntParam("IMAGE_HEIGHT"), CV_8UC3);
@@ -20,7 +25,6 @@ bool EngineOffline::run() {
                 Config::get_instance().resourceDirectory() + "/" +
                 Config::get_instance().readStringParam("IMG_PATH"));
         std::string imgName = Config::get_instance().readStringParam("IMG_NAME");
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         cv::Mat blurred_lena;
         int k = ceil(rand()%5)*8+1;
@@ -40,7 +44,6 @@ bool EngineOffline::run() {
         dm = appMsg->displayMessenger->prepareMsg();
         dm->pool[imgName.c_str()] = lena;
         dm->pool["blurred lena"] = blurred_lena;
-//        dm->pool["resized"] = resized;
 
         appMsg->displayMessenger->send();
         if (appMsg->displayMessenger->isClosed()) {
