@@ -2,8 +2,8 @@
 // Created by Masahiro Hirano <masahiro.dll@gmail.com>
 //
 
-#ifndef IMGUI_BAREBONE_APPLICATION_H
-#define IMGUI_BAREBONE_APPLICATION_H
+#ifndef ISLAY_APPLICATION_H
+#define ISLAY_APPLICATION_H
 
 // dear imgui: standalone example application for SDL2 + OpenGL
 // If you are new to dear imgui, see examples/README.txt and documentation at the top of imgui.cpp.
@@ -32,8 +32,6 @@
 #include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #endif
 
-#include "ImageTexture.h"
-
 class Application {
     SDL_Window* window;
     SDL_GLContext gl_context;
@@ -49,4 +47,4 @@ public:
 
 
 
-#endif //IMGUI_BAREBONE_APPLICATION_H
+#endif //ISLAY_APPLICATION_H

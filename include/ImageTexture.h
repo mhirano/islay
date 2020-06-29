@@ -2,8 +2,8 @@
 // Created by Masahiro Hirano <masahiro.dll@gmail.com>
 //
 
-#ifndef IMGUI_BAREBONE_IMAGETEXTURE_H
-#define IMGUI_BAREBONE_IMAGETEXTURE_H
+#ifndef ISLAY_IMAGETEXTURE_H
+#define ISLAY_IMAGETEXTURE_H
 
 //#include <cstdio>
 //#include <fstream>
@@ -39,19 +39,34 @@ public:
         glDeleteTextures(1, &my_opengl_texture);
     };
 
-    void setImage(cv::Mat *pframe){ // from cv::Mat (BGR)
-        width = pframe->cols;
-        height = pframe->rows;
+    void setImage(cv::Mat *pframe, float mag = 1.0){ // from cv::Mat (BGR)
 
-        glGenTextures(1, &my_opengl_texture);
-        glBindTexture(GL_TEXTURE_2D, my_opengl_texture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        if(!pframe->empty()) {
+            resize(*pframe, *pframe, cv::Size(), mag, mag, cv::INTER_NEAREST);
 
-        // Some enviromnent doesn't support GP_BGR
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR,
-                     GL_UNSIGNED_BYTE, (pframe->data));
+            width = pframe->cols;
+            height = pframe->rows;
+
+            glGenTextures(1, &my_opengl_texture);
+            glBindTexture(GL_TEXTURE_2D, my_opengl_texture);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+            if (pframe->channels() == 3) { // Pretty ugly, costly implementation...
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR,
+                             GL_UNSIGNED_BYTE, (pframe->data));
+            } else if (pframe->channels() == 1 && pframe->depth() == CV_8U) {
+                cv::cvtColor(*pframe, *pframe, cv::COLOR_GRAY2BGR);
+                // Some enviromnent doesn't support GP_BGR
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR,
+                             GL_UNSIGNED_BYTE, (pframe->data));
+            } else if (pframe->channels() == 1 && pframe->depth() == CV_32F) {
+                cv::cvtColor(*pframe, *pframe, cv::COLOR_GRAY2BGR);
+                // Some enviromnent doesn't support GP_BGR
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR,
+                             GL_FLOAT, (pframe->data));
+            }
+        }
     };
 
     void setImage(std::string filename){ // from file
@@ -66,4 +81,4 @@ public:
     ImVec2 getSize(){ return ImVec2(width, height); };
 };
 
-#endif //IMGUI_BAREBONE_IMAGETEXTURE_H
+#endif //ISLAY_IMAGETEXTURE_H

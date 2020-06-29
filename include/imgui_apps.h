@@ -2,8 +2,8 @@
 // Created by Masahiro Hirano <masahiro.dll@gmail.com>
 //
 
-#ifndef IMGUI_BAREBONE_IMGUI_APPS_H
-#define IMGUI_BAREBONE_IMGUI_APPS_H
+#ifndef ISLAY_IMGUI_APPS_H
+#define ISLAY_IMGUI_APPS_H
 
 // Usage:
 //  static ExampleAppLog my_log;
