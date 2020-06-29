@@ -1,0 +1,10 @@
+{
+  "RESOURCE_DIRECTORY" : "@RESOURCE_DIRECTORY@",
+  "RESULT_PARENT_DIRECTORY" : "@RESULT_PARENT_DIRECTORY@",
+  "IMG_NAME": "lena",
+  "IMG_PATH" : "../res/lena.png",
+  "BLURRED_IMG" : "/blurred_lena.png",
+  "IMAGE_WIDTH": 512,
+  "IMAGE_HEIGHT": 512,
+  "INT_VAR": 100
+}

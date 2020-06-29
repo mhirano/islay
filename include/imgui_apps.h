@@ -5,6 +5,13 @@
 #ifndef ISLAY_IMGUI_APPS_H
 #define ISLAY_IMGUI_APPS_H
 
+#include <iostream>
+#include <string>
+#include "rapidjson/document.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/filewritestream.h"
+#include "rapidjson/prettywriter.h"
+
 // Usage:
 //  static ExampleAppLog my_log;
 //  my_log.AddLog("Hello %d world\n", 123);
@@ -125,4 +132,71 @@ struct ExampleAppLog
     }
 };
 
-#endif //IMGUI_BAREBONE_IMGUI_APPS_H
+static void DrawJsonConfig(std::string jsonName, const rapidjson::Document &config) {
+    auto array2string = [](rapidjson::GenericValue<rapidjson::UTF8<>>::ConstArray array) -> std::string {
+
+        std::string str;
+        int row = array.Size();
+        int col;
+        if(array[0].IsArray()) {
+            col = array[0].Size();
+            str = "[ ";
+            for (int j = 0; j < row; j++) {
+                str += "[ ";
+                for (int i = 0; i < col; i++) {
+                    str = str + std::to_string(array[j][i].GetDouble()) + " ";
+                }
+                if(j == row-1){
+                    str += "]";
+                } else {
+                    str += "], ";
+                }
+            }
+            str += " ]";
+        } else {
+            str = "[ ";
+            for (int i = 0; i < row; i++) {
+                str = str + std::to_string(array[i].GetDouble()) + " ";
+            }
+            str += " ]";
+        }
+
+        return str;
+    };
+
+    ImGui::Begin(jsonName.c_str());
+    for (rapidjson::Value::ConstMemberIterator itr = config.MemberBegin(); itr != config.MemberEnd(); itr++) {
+        const rapidjson::Value &n = itr->name;
+        const rapidjson::Value &v = itr->value;
+        switch (v.GetType()) {
+            case rapidjson::kNullType:       //!< null
+                break;
+            case rapidjson::kFalseType:      //!< false
+                ImGui::Text("%s: false", n.GetString());
+                break;
+            case rapidjson::kTrueType :       //!< true
+                ImGui::Text("%s: true", n.GetString());
+                break;
+            case rapidjson::kObjectType :    //!< object
+                break;
+            case rapidjson::kArrayType :     //!< array
+                ImGui::Text("%s: %s", n.GetString(), array2string(v.GetArray()).c_str());
+                break;
+            case rapidjson::kStringType :    //!< string
+                ImGui::Text("%s: %s", n.GetString(), v.GetString());
+                break;
+            case rapidjson::kNumberType :    //!< number
+                if (v.IsInt()) {
+                    ImGui::Text("%s: %d", n.GetString(), v.GetInt());
+                } else if (v.IsDouble()) {
+                    ImGui::Text("%s: %lf", n.GetString(), v.GetDouble());
+                } else if (v.IsFloat()) {
+                    ImGui::Text("%s: %f", n.GetString(), v.GetFloat());
+                }
+                break;
+        }
+    }
+    ImGui::End();
+}
+
+#endif //ISLAY_IMGUI_APPS_H

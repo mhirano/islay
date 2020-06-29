@@ -23,7 +23,7 @@ endif()
 
 #### Configure config files
 message(STATUS "Configure json.in files")
-file(GLOB JSON_IN_LISTS ${PROJECT_SOURCE_DIR}/res/config/*.json.in)
+file(GLOB JSON_IN_LISTS ${PROJECT_SOURCE_DIR}/config/*.json.in)
 foreach(json_in_file IN LISTS JSON_IN_LISTS)
   message(STATUS "  Configuring ${json_in_file}")
   string(REPLACE .json.in .json json_file ${json_in_file})

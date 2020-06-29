@@ -4,32 +4,43 @@
 
 #include "Engine.h"
 #include "AppMsg.h"
+#include "Config.h"
 
 bool EngineOffline::run() {
+    Config::get_instance().saveConfig();
+
     worker = std::thread([this] {
         /**
          * Main process
          * - You write your algorithm here.
          */
-        cv::Mat lena = cv::imread("../res/lena.png");
+        cv::Mat lena(Config::get_instance().readIntParam("IMAGE_WIDTH"),
+                     Config::get_instance().readIntParam("IMAGE_HEIGHT"), CV_8UC3);
+        lena = cv::imread(
+                Config::get_instance().resourceDirectory() + "/" +
+                Config::get_instance().readStringParam("IMG_PATH"));
+        std::string imgName = Config::get_instance().readStringParam("IMG_NAME");
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-        cv::Mat canvas1, canvas2;
+        cv::Mat blurred_lena;
         int k = ceil(rand()%5)*8+1;
-        cv::GaussianBlur( lena, canvas1, cv::Size(k,k), 0 );
-        cv::GaussianBlur( lena, canvas2, cv::Size(k*2+1,k*2+1), 0 );
+        cv::GaussianBlur( lena, blurred_lena, cv::Size(k,k), 0 );
+
+        cv::imwrite(Config::get_instance().resultDirectory() + Config::get_instance().readStringParam("BLURRED_IMG"),
+                    blurred_lena, std::vector<int>{cv::IMWRITE_PNG_COMPRESSION});
 
         /**
          * Show processed image
-         * - You can show img(cv::Mat) by adding
+         * - You can show cv::Mat img by simply adding
          *     dm->pool["Name of window"] = img;
+         * - Images show on the same location by default.
          * - You can modify ImageTexture::setImage to show a Mat which is not a currently supported format.
          */
         DispMsg *dm;
         dm = appMsg->displayMessenger->prepareMsg();
-        dm->pool["original lena"] = lena;
-        dm->pool["blurred lena"] = canvas1;
-        dm->pool["doubly blurred lena"] = canvas2;
+        dm->pool[imgName.c_str()] = lena;
+        dm->pool["blurred lena"] = blurred_lena;
+//        dm->pool["resized"] = resized;
 
         appMsg->displayMessenger->send();
         if (appMsg->displayMessenger->isClosed()) {

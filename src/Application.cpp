@@ -6,6 +6,7 @@
 #include "AppMsg.h"
 #include "Engine.h"
 #include "ImageTexture.h"
+#include "Config.h"
 
 Application::Application() {
 // Setup SDL
@@ -110,11 +111,12 @@ bool Application::run(){
 
     ExampleAppLog my_log;
 
+    Config::get_instance(); // initialize Config
+
     AppMsgPtr appMsg = std::make_shared<AppMsg>();
     std::shared_ptr<EngineOffline> engine(new EngineOffline(appMsg));
 
     std::map<std::string, ImageTexture> texturePool;
-    float imageMag = 1.0;
 
 // Main loop
     bool done = false;
@@ -163,19 +165,17 @@ bool Application::run(){
         }
 
         DispMsg *md = appMsg->displayMessenger->receive();
-        if (md != nullptr) {
-            // texture pool updated
+        if (md != nullptr) { // texture pool updated
             texturePool.clear();
             for (auto img_in_pool:md->pool) {
                 std::string winname = img_in_pool.first;
                 ImGui::Begin(winname.c_str());
-                texturePool[img_in_pool.first].setImage(&img_in_pool.second, imageMag);
+                texturePool[img_in_pool.first].setImage(&img_in_pool.second);
                 ImGui::Image(texturePool[img_in_pool.first].getOpenglTexture(),
                              texturePool[img_in_pool.first].getSize());
                 ImGui::End();
             }
-        } else {
-            // texture pool not updated
+        } else { // texture pool not updated
             for (auto &texture: texturePool) {
                 std::string winname = texture.first;
                 ImGui::Begin(winname.c_str());
@@ -185,7 +185,9 @@ bool Application::run(){
             }
         }
 
-//        my_log.Draw("title");
+        {
+            DrawJsonConfig("config", Config::get_instance().getDocument());
+        }
 
 // Rendering
         ImGui::Render();
