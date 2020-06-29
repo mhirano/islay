@@ -11,11 +11,11 @@ bool EngineOffline::run() {
          * Main process
          * - You write your algorithm here.
          */
-        cv::Mat lena = cv::imread("../data/lena.png");
+        cv::Mat lena = cv::imread("../res/lena.png");
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         cv::Mat canvas1, canvas2;
-        int k = ceil(rand()%5)*4+1;
+        int k = ceil(rand()%5)*8+1;
         cv::GaussianBlur( lena, canvas1, cv::Size(k,k), 0 );
         cv::GaussianBlur( lena, canvas2, cv::Size(k*2+1,k*2+1), 0 );
 

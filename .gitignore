@@ -155,7 +155,9 @@ fabric.properties
 .idea/modules.xml
 .idea/vcs.xml
 .idea/.name
+.idea/islay.iml
 
 
 ## Exceptions
+!res/lena.png
 !.gitkeep
