@@ -37,8 +37,9 @@ bool EngineOffline::run() {
          * Show processed image
          * - You can show cv::Mat img by simply adding
          *     dm->pool["Name of window"] = img;
-         * - Images show on the same location by default.
-         * - You can modify ImageTexture::setImage to show a Mat which is not a currently supported format.
+         *   between prepareMsg() and send().
+         * - Images show up at the same location by default.
+         * - You can modify ImageTexture::setImage to show a cv::Mat whose format is not currently supported.
          */
         DispMsg *dm;
         dm = appMsg->displayMessenger->prepareMsg();
