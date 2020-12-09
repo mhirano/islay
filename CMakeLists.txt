@@ -66,6 +66,7 @@ include_directories(3rdparty/rapidjson/include)
 # Rendering
 find_package(SDL2 REQUIRED)
 find_package(GLFW REQUIRED)
+find_package(GLEW REQUIRED)
 find_package(glm REQUIRED)
 
 # ImGui
@@ -75,6 +76,14 @@ include_directories(
   3rdparty/imgui/examples/libs/gl3w
   ${SDL2_INCLUDE_DIRS}
 )
+
+# implot for Dear ImGui
+include_directories( 3rdparty/implot )
+set(IMPLOT_SRC
+        3rdparty/implot/implot.h
+        3rdparty/implot/implot_internal.h
+        3rdparty/implot/implot.cpp
+        3rdparty/implot/implot_items.cpp)
 
 ######## ######## ######## ######## ######## ######## ######## ########
 # Compiler settings
@@ -107,13 +116,14 @@ add_library(imgui SHARED
   3rdparty/imgui/examples/imgui_impl_sdl.cpp
   3rdparty/imgui/examples/imgui_impl_opengl3.cpp
   3rdparty/imgui/examples/libs/gl3w/GL/gl3w.c
+  ${IMPLOT_SRC}
 )
 set_source_files_properties(imgui/examples/libs/gl3w/GL/gl3w.c PROPERTIES COMPILE_FLAGS -Wno-pedantic)
 
 if(UNIX AND NOT APPLE)
-  target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GL dl )
+  target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GLEW::glew GL dl )
 else(APPLE)
-  target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} dl )
+  target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GLEW::glew dl)
 endif()
 
 add_executable(${PROJECT_NAME}

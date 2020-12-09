@@ -5,6 +5,7 @@
 #include "Application.h"
 #include <opencv2/opencv.hpp>
 #include "imgui_apps.h"
+#include "implot.h"
 
 #include "AppMsg.h"
 #include "Engine.h"
@@ -72,6 +73,7 @@ Application::~Application(){
 // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
     SDL_GL_DeleteContext(gl_context);
@@ -84,6 +86,7 @@ bool Application::run(){
 // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); // (void)io;
 //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
@@ -182,6 +185,29 @@ bool Application::run(){
                              texturePool[texture.first].getSize());
                 ImGui::End();
             }
+        }
+
+        {
+            static float xs1[1001], ys1[1001];
+            double DEMO_TIME = ImGui::GetTime();
+            for (int i = 0; i < 1001; ++i) {
+                xs1[i] = i * 0.001f;
+                ys1[i] = 0.5f + 0.5f * sinf(50 * (xs1[i] + (float)DEMO_TIME / 10));
+            }
+            static double xs2[11], ys2[11];
+            for (int i = 0; i < 11; ++i) {
+                xs2[i] = i * 0.1f;
+                ys2[i] = xs2[i] * xs2[i];
+            }
+            ImGui::Begin("Plot");
+            ImGui::BulletText("Anti-aliasing can be enabled from the plot's context menu (see Help).");
+            if (ImPlot::BeginPlot("Line Plot", "x", "f(x)")) {
+                ImPlot::PlotLine("sin(x)", xs1, ys1, 1001);
+                ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+                ImPlot::PlotLine("x^2", xs2, ys2, 11);
+                ImPlot::EndPlot();
+            }
+            ImGui::End();
         }
 
         {
