@@ -7,3 +7,6 @@
 [submodule "3rdparty/implot"]
 	path = 3rdparty/implot
 	url = git@github.com:mhirano/implot.git
+[submodule "3rdparty/spdlog"]
+	path = 3rdparty/spdlog
+	url = git@github.com:mhirano/spdlog.git
