@@ -11,6 +11,7 @@
 #include "Engine.h"
 #include "ImageTexture.h"
 #include "Config.h"
+#include "Logger.h"
 
 Application::Application() {
 // Setup SDL
@@ -212,6 +213,13 @@ bool Application::run(){
 
         {
             DrawJsonConfig("config", Config::get_instance().getDocument());
+        }
+
+        {
+            my_log.AddLog( "%s", Logger::get_instance().oss.str().c_str() );
+            Logger::get_instance().oss.str("");
+            Logger::get_instance().oss.clear();
+            my_log.Draw("Log");
         }
 
         {

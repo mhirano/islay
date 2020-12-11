@@ -63,6 +63,9 @@ find_package(Eigen3 REQUIRED)
 # rapidjson
 include_directories(3rdparty/rapidjson/include)
 
+# spdlog
+include_directories(3rdparty/spdlog/include)
+
 # Rendering
 find_package(SDL2 REQUIRED)
 find_package(GLFW REQUIRED)

@@ -5,6 +5,7 @@
 #include "Engine.h"
 #include "AppMsg.h"
 #include "Config.h"
+#include "Logger.h"
 
 bool EngineOffline::run() {
 
@@ -52,7 +53,7 @@ bool EngineOffline::run() {
         }
     });
 
-    std::cout << "Image processing for a single frame done ..." << std::endl;
+    SPDLOG_DEBUG("Image processing for a single frame done ...");
 
     reset();
 
