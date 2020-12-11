@@ -12,6 +12,7 @@
 #include "ImageTexture.h"
 #include "Config.h"
 #include "Logger.h"
+#include "Utility.h"
 
 Application::Application() {
 // Setup SDL
@@ -129,6 +130,13 @@ bool Application::run(){
 
     std::map<std::string, ImageTexture> texturePool;
 
+    // Window capture and recording
+    bool requestedWindowCapture = false;
+    enum WINDOW_RECORDING_STATUS {PAUSED = 0, REQUESTED = 1, RECORDING = 2};
+    WINDOW_RECORDING_STATUS windowRecordingStatus = WINDOW_RECORDING_STATUS::PAUSED;
+    cv::VideoWriter writer;
+    std::string windowRecordingFileName;
+
 // Main loop
     bool done = false;
     while (!done)
@@ -160,10 +168,42 @@ bool Application::run(){
             if (ImGui::Button("Blur lena randomly")) {
                 engine->run();
             }
-            ImGui::NewLine();
+            ImGui::SameLine();
             if (ImGui::Button("Exit")){
                 done = true;
             }
+            ImGui::Text("Window Capture");
+            ImGui::Indent();
+            if (ImGui::Button("Capture")){
+                requestedWindowCapture = true;
+            }
+            ImGui::Unindent();
+            ImGui::Text("Window recording");
+            ImGui::Indent();
+            if (ImGui::Button("Start")){
+                if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
+                    int fps_encode = 30;
+                    windowRecordingFileName = "recording_" + Util::now() + ".mp4";
+                    writer.open(Config::get_instance().resultDirectory() + "/" + windowRecordingFileName,
+                                cv::VideoWriter::fourcc('m', 'p', '4', 'v'), fps_encode,
+                                cv::Size((int) io.DisplaySize.x, (int) io.DisplaySize.y));
+                    windowRecordingStatus = WINDOW_RECORDING_STATUS::REQUESTED;
+                }
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Stop")){
+                windowRecordingStatus = WINDOW_RECORDING_STATUS::PAUSED;
+                writer.release();
+            }
+            ImGui::SameLine();
+            if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
+                ImGui::Text("PAUSED");
+            } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::REQUESTED) {
+                ImGui::Text("REQUESTED");
+            } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::RECORDING) {
+                ImGui::Text("%s", ("RECORDING: " + windowRecordingFileName).c_str());
+            }
+            ImGui::Unindent();
             ImGui::End();
         }
 
@@ -236,9 +276,39 @@ bool Application::run(){
             ImGui::End();
         }
 
-// Rendering
+        /// Rendering
         ImGui::Render();
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+
+        /// Window capture and recording
+        if (requestedWindowCapture == true) {
+            glFinish();
+            int width = (int) io.DisplaySize.x;
+            int height = (int) io.DisplaySize.y;
+            int type = CV_8UC4;
+            int format = GL_BGRA;
+            glReadBuffer(GL_FRONT);
+            static cv::Mat out_img(cv::Size(width, height), type);
+            glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, out_img.data);
+            cv::flip(out_img, out_img, 0);
+            cv::imwrite((Config::get_instance().resultDirectory() + "/capture_" + Util::now() + ".bmp").c_str(),out_img);
+            requestedWindowCapture = false;
+        }
+        if (windowRecordingStatus >= WINDOW_RECORDING_STATUS::REQUESTED) {
+            /// NOTE: For better color representation, consider using ffmpeg
+            windowRecordingStatus = WINDOW_RECORDING_STATUS::RECORDING;
+            glFinish();
+            int width = (int) io.DisplaySize.x;
+            int height = (int) io.DisplaySize.y;
+            int type = CV_8UC3;
+            int format = GL_BGR;
+            glReadBuffer(GL_FRONT);
+            static cv::Mat out_img(cv::Size(width, height), type);
+            glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, out_img.data);
+            cv::flip(out_img, out_img, 0);
+            writer << out_img;
+        }
+
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
