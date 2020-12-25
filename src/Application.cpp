@@ -184,9 +184,11 @@ bool Application::run(){
                 if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
                     int fps_encode = 30;
                     windowRecordingFileName = "recording_" + Util::now() + ".mp4";
-                    writer.open(Config::get_instance().resultDirectory() + "/" + windowRecordingFileName,
-                                cv::VideoWriter::fourcc('m', 'p', '4', 'v'), fps_encode,
-                                cv::Size((int) io.DisplaySize.x, (int) io.DisplaySize.y));
+                    writer = cv::VideoWriter(
+                            Config::get_instance().resultDirectory() + "/" + windowRecordingFileName,
+                            cv::VideoWriter::fourcc('m', 'p', '4', 'v'), fps_encode,
+                            cv::Size((int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x,
+                                     (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y));
                     windowRecordingStatus = WINDOW_RECORDING_STATUS::REQUESTED;
                 }
             }
@@ -281,29 +283,31 @@ bool Application::run(){
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 
         /// Window capture and recording
-        if (requestedWindowCapture == true) {
+        if (requestedWindowCapture) {
             glFinish();
-            int width = (int) io.DisplaySize.x;
-            int height = (int) io.DisplaySize.y;
+            int width = (int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x;
+            int height = (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y;
             int type = CV_8UC4;
             int format = GL_BGRA;
             glReadBuffer(GL_FRONT);
-            static cv::Mat out_img(cv::Size(width, height), type);
+            static cv::Mat out_img;
+            out_img = cv::Mat(cv::Size(width, height), type);
             glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, out_img.data);
             cv::flip(out_img, out_img, 0);
-            cv::imwrite((Config::get_instance().resultDirectory() + "/capture_" + Util::now() + ".bmp").c_str(),out_img);
+            cv::imwrite((Config::get_instance().resultDirectory() + "/capture_" + Util::now() + ".png").c_str(),out_img,std::vector<int>(cv::IMWRITE_PNG_COMPRESSION));
             requestedWindowCapture = false;
         }
         if (windowRecordingStatus >= WINDOW_RECORDING_STATUS::REQUESTED) {
             /// NOTE: For better color representation, consider using ffmpeg
             windowRecordingStatus = WINDOW_RECORDING_STATUS::RECORDING;
             glFinish();
-            int width = (int) io.DisplaySize.x;
-            int height = (int) io.DisplaySize.y;
+            int width = (int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x;
+            int height = (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y;
             int type = CV_8UC3;
             int format = GL_BGR;
             glReadBuffer(GL_FRONT);
-            static cv::Mat out_img(cv::Size(width, height), type);
+            static cv::Mat out_img;
+            out_img = cv::Mat(cv::Size(width, height), type);
             glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, out_img.data);
             cv::flip(out_img, out_img, 0);
             writer << out_img;
