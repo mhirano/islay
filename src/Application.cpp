@@ -184,6 +184,7 @@ bool Application::run(){
                 if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
                     int fps_encode = 30;
                     windowRecordingFileName = "recording_" + Util::now() + ".mp4";
+                    SPDLOG_INFO("Video recording start: {}", windowRecordingFileName);
                     writer = cv::VideoWriter(
                             Config::get_instance().resultDirectory() + "/" + windowRecordingFileName,
                             cv::VideoWriter::fourcc('m', 'p', '4', 'v'), fps_encode,
@@ -194,6 +195,7 @@ bool Application::run(){
             }
             ImGui::SameLine();
             if (ImGui::Button("Stop")){
+                SPDLOG_INFO("Video recording end");
                 windowRecordingStatus = WINDOW_RECORDING_STATUS::PAUSED;
                 writer.release();
             }
@@ -203,7 +205,7 @@ bool Application::run(){
             } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::REQUESTED) {
                 ImGui::Text("REQUESTED");
             } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::RECORDING) {
-                ImGui::Text("%s", ("RECORDING: " + windowRecordingFileName).c_str());
+                ImGui::Text("%s", "RECORDING...");
             }
             ImGui::Unindent();
             ImGui::End();
@@ -287,14 +289,15 @@ bool Application::run(){
             glFinish();
             int width = (int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x;
             int height = (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y;
-            int type = CV_8UC4;
-            int format = GL_BGRA;
+            int type = CV_8UC3;
+            int format = GL_BGR;
             glReadBuffer(GL_FRONT);
             static cv::Mat out_img;
             out_img = cv::Mat(cv::Size(width, height), type);
             glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, out_img.data);
             cv::flip(out_img, out_img, 0);
             cv::imwrite((Config::get_instance().resultDirectory() + "/capture_" + Util::now() + ".png").c_str(),out_img,std::vector<int>(cv::IMWRITE_PNG_COMPRESSION));
+            SPDLOG_INFO("Window captured: {}", "capture_" + Util::now() + ".png");
             requestedWindowCapture = false;
         }
         if (windowRecordingStatus >= WINDOW_RECORDING_STATUS::REQUESTED) {
