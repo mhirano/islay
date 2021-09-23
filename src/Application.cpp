@@ -134,7 +134,7 @@ bool Application::run(){
     std::map<std::string, ImageTexture> texturePool;
 
     enum SHOW_IMAGE_MODE {IMGUI = 0, OPENCV = 1};
-    static int selectedShowImageMode = SHOW_IMAGE_MODE::OPENCV;
+    static int selectedShowImageMode = SHOW_IMAGE_MODE::IMGUI;
 
 // Main loop
     bool done = false;
@@ -252,6 +252,7 @@ bool Application::run(){
                     ImGui::End();
                 }
             } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){ /// Use OpenCV window
+                cv::waitKey(1);
             }
         }
 
