@@ -133,6 +133,9 @@ bool Application::run(){
     std::shared_ptr<EngineOffline> engine(new EngineOffline(appMsg));
     std::map<std::string, ImageTexture> texturePool;
 
+    enum SHOW_IMAGE_MODE {IMGUI = 0, OPENCV = 1};
+    static int selectedShowImageMode = SHOW_IMAGE_MODE::OPENCV;
+
 // Main loop
     bool done = false;
     while (!done)
@@ -212,24 +215,43 @@ bool Application::run(){
             ImGui::End();
         }
 
+
+
+        /// Destroy OpenCV windows if exists
+        if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) { /// Use ImGui
+            cv::destroyAllWindows();
+        }
+
         DispMsg *md = appMsg->displayMessenger->receive();
         if (md != nullptr) { // texture pool updated
-            texturePool.clear();
-            for (auto img_in_pool:md->pool) {
-                std::string winname = img_in_pool.first;
-                ImGui::Begin(winname.c_str());
-                texturePool[img_in_pool.first].setImage(&img_in_pool.second);
-                ImGui::Image(texturePool[img_in_pool.first].getOpenglTexture(),
-                             texturePool[img_in_pool.first].getSize());
-                ImGui::End();
+            if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI){ /// Use ImGui
+                texturePool.clear();
+                for (auto img_in_pool:md->pool) {
+                    std::string winname = img_in_pool.first;
+                    ImGui::Begin(winname.c_str());
+                    texturePool[img_in_pool.first].setImage(&img_in_pool.second);
+                    ImGui::Image(texturePool[img_in_pool.first].getOpenglTexture(),
+                                 texturePool[img_in_pool.first].getSize());
+                    ImGui::End();
+                }
+            } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){ /// Use OpenCV window
+                for (auto& img_in_pool:md->pool) {
+                    std::string winname = img_in_pool.first;
+                    cv::namedWindow(winname);
+                    cv::imshow(winname, img_in_pool.second);
+                }
+                cv::waitKey(1);
             }
         } else { // texture pool not updated
-            for (auto &texture: texturePool) {
-                std::string winname = texture.first;
-                ImGui::Begin(winname.c_str());
-                ImGui::Image(texturePool[texture.first].getOpenglTexture(),
-                             texturePool[texture.first].getSize());
-                ImGui::End();
+            if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI){
+                for (auto &texture: texturePool) { /// Use ImGui
+                    std::string winname = texture.first;
+                    ImGui::Begin(winname.c_str());
+                    ImGui::Image(texturePool[texture.first].getOpenglTexture(),
+                                 texturePool[texture.first].getSize());
+                    ImGui::End();
+                }
+            } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){ /// Use OpenCV window
             }
         }
 
@@ -261,6 +283,7 @@ bool Application::run(){
         }
 
         {
+            Logger::get_instance().logger->flush();
             my_log.AddLog( "%s", Logger::get_instance().oss.str().c_str() );
             Logger::get_instance().oss.str("");
             Logger::get_instance().oss.clear();
@@ -272,62 +295,63 @@ bool Application::run(){
             static float f = 0.0f;
             ImVec2 window_pos = ImVec2(DISTANCE, DISTANCE);
             ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
-            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
-            ImGui::SetNextWindowSize(ImVec2(300,40), ImGuiCond_Always);
+            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Appearing, window_pos_pivot);
+            ImGui::SetNextWindowSize(ImVec2(300,200), ImGuiCond_Always);
             ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
-            if (ImGui::Begin("GUI", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+            if (ImGui::Begin("GUI", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
             {
-                ImGui::Text("GUI runs at %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            }
-            ImGui::End();
-        }
-
-        {
-            static float f = 0.0f;
-            ImVec2 window_pos = ImVec2(10,50);
-            ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
-            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
-            ImGui::SetNextWindowSize(ImVec2(300,160), ImGuiCond_Always);
-            ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
-            if (ImGui::Begin("islay Commands", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav)) {
-                ImGui::Text("Window Capture");
-                ImGui::Indent();
-                if (ImGui::Button("Capture")) {
-                    requestedWindowCapture = true;
+                {
+                    ImGui::Text("GUI runs at %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
                 }
-                ImGui::Unindent();
-                ImGui::Text("Window recording");
-                ImGui::Indent();
-                if (ImGui::Button("Start")) {
-                    if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
-                        int fps_encode = 30;
-                        windowRecordingFileName = "recording_" + Util::now() + ".mp4";
-                        SPDLOG_INFO("Video recording start: {}", windowRecordingFileName);
-                        writer = cv::VideoWriter(
-                                Config::get_instance().resultDirectory() + "/" + windowRecordingFileName,
-                                cv::VideoWriter::fourcc('m', 'p', '4', 'v'), fps_encode,
-                                cv::Size((int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x,
-                                         (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y));
-                        windowRecordingStatus = WINDOW_RECORDING_STATUS::REQUESTED;
+                {
+                    ImGui::Text("Image Rendering Mode");
+                    ImGui::Indent();
+                    ImGui::RadioButton("ImGui", &selectedShowImageMode, SHOW_IMAGE_MODE::IMGUI); ImGui::SameLine();
+                    ImGui::RadioButton("OpenCV", &selectedShowImageMode, SHOW_IMAGE_MODE::OPENCV);
+                    ImGui::Unindent();
+                }
+                {
+                    static float f = 0.0f;
+                    ImGui::Text("Window Capture");
+                    ImGui::Indent();
+                    if (ImGui::Button("Capture")) {
+                        requestedWindowCapture = true;
                     }
+                    ImGui::Unindent();
+                    ImGui::Text("Window Recording");
+                    ImGui::Indent();
+                    if (ImGui::Button("Start")) {
+                        if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
+                            int fps_encode = 30;
+                            windowRecordingFileName = "recording_" + Util::now() + ".mp4";
+                            SPDLOG_INFO("Video recording start: {}", windowRecordingFileName);
+                            writer = cv::VideoWriter(
+                                    Config::get_instance().resultDirectory() + "/" + windowRecordingFileName,
+                                    cv::VideoWriter::fourcc('m', 'p', '4', 'v'), fps_encode,
+                                    cv::Size((int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x,
+                                             (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y));
+                            windowRecordingStatus = WINDOW_RECORDING_STATUS::REQUESTED;
+                        }
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button("Stop")) {
+                        SPDLOG_INFO("Video recording end");
+                        windowRecordingStatus = WINDOW_RECORDING_STATUS::PAUSED;
+                        writer.release();
+                    }
+                    ImGui::SameLine();
+                    if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
+                        ImGui::Text("PAUSED");
+                    } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::REQUESTED) {
+                        ImGui::Text("REQUESTED");
+                    } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::RECORDING) {
+                        ImGui::Text("%s", "RECORDING...");
+                    }
+                    ImGui::Unindent();
                 }
-                ImGui::SameLine();
-                if (ImGui::Button("Stop")) {
-                    SPDLOG_INFO("Video recording end");
-                    windowRecordingStatus = WINDOW_RECORDING_STATUS::PAUSED;
-                    writer.release();
-                }
-                ImGui::SameLine();
-                if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
-                    ImGui::Text("PAUSED");
-                } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::REQUESTED) {
-                    ImGui::Text("REQUESTED");
-                } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::RECORDING) {
-                    ImGui::Text("%s", "RECORDING...");
-                }
-                ImGui::Unindent();
             }
             ImGui::End();
+
         }
 
         /// Rendering

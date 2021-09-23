@@ -69,6 +69,8 @@ public:
         }
     };
 
+    void getOpenCVMat(); /// TODO: implement this. Get OpenCV Mat from OpenGL texture
+
     void setImage(std::string filename){ // from file
         cv::Mat frame = cv::imread(filename);
         setImage(&frame);
