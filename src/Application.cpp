@@ -366,7 +366,7 @@ bool Application::run(){
             int height = (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y;
             int type = CV_8UC3;
             int format = GL_BGR;
-            glReadBuffer(GL_FRONT);
+            glReadBuffer(GL_BACK);
             static cv::Mat out_img;
             out_img = cv::Mat(cv::Size(width, height), type);
             glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, out_img.data);
@@ -383,7 +383,7 @@ bool Application::run(){
             int height = (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y;
             int type = CV_8UC3;
             int format = GL_BGR;
-            glReadBuffer(GL_FRONT);
+            glReadBuffer(GL_BACK);
             static cv::Mat out_img;
             out_img = cv::Mat(cv::Size(width, height), type);
             glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, out_img.data);

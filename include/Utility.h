@@ -78,9 +78,17 @@ namespace Util {
 
     inline std::string now(){
         std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        std::string s(15, '\0');
-        std::strftime(&s[0], s.size(), "%Y%m%d-%H%M%S", std::localtime(&now));
-        return s;
+        auto tm_now = std::localtime(&now);
+        std::ostringstream os;
+        os.str("");
+        os.clear();
+        os << (tm_now->tm_year+1900)
+           << std::setw(2) << std::setfill('0') << (tm_now->tm_mon+1)
+           << std::setw(2) << std::setfill('0') << tm_now->tm_mday << "-"
+           << std::setw(2) << std::setfill('0') << tm_now->tm_hour
+           << std::setw(2) << std::setfill('0') << tm_now->tm_min
+           << std::setw(2) << std::setfill('0') << tm_now->tm_sec;
+        return os.str();
     }
 }
 
