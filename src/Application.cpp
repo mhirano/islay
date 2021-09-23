@@ -96,6 +96,7 @@ bool Application::run(){
 // Setup Dear ImGui style
     ImGui::StyleColorsDark();
 //ImGui::StyleColorsClassic();
+    ImVec4 clear_color = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);    // Set background color
 
 // Setup Platform/Renderer bindings
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
@@ -118,24 +119,19 @@ bool Application::run(){
     ImFont* font = io.Fonts->AddFontFromFileTTF("../font/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     IM_ASSERT(font != NULL);
 
-// Our state
-    ImVec4 clear_color = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
-
-    ExampleAppLog my_log;
-
-    Config::get_instance(); // initialize Config
-
-    AppMsgPtr appMsg = std::make_shared<AppMsg>();
-    std::shared_ptr<EngineOffline> engine(new EngineOffline(appMsg));
-
-    std::map<std::string, ImageTexture> texturePool;
-
-    // Window capture and recording
+// Window capture and recording
     bool requestedWindowCapture = false;
     enum WINDOW_RECORDING_STATUS {PAUSED = 0, REQUESTED = 1, RECORDING = 2};
     WINDOW_RECORDING_STATUS windowRecordingStatus = WINDOW_RECORDING_STATUS::PAUSED;
     cv::VideoWriter writer;
     std::string windowRecordingFileName;
+
+// Setup application
+    ExampleAppLog my_log;
+    Config::get_instance(); // initialize Config
+    AppMsgPtr appMsg = std::make_shared<AppMsg>();
+    std::shared_ptr<EngineOffline> engine(new EngineOffline(appMsg));
+    std::map<std::string, ImageTexture> texturePool;
 
 // Main loop
     bool done = false;
@@ -162,6 +158,11 @@ bool Application::run(){
         ImGui_ImplSDL2_NewFrame(window);
         ImGui::NewFrame();
 
+// Dear ImGui demo
+        {
+            ImGui::ShowDemoWindow();
+        }
+
 // Commands
         {
             ImGui::Begin("Commands");
@@ -172,42 +173,42 @@ bool Application::run(){
             if (ImGui::Button("Exit")){
                 done = true;
             }
-            ImGui::Text("Window Capture");
-            ImGui::Indent();
-            if (ImGui::Button("Capture")){
-                requestedWindowCapture = true;
-            }
-            ImGui::Unindent();
-            ImGui::Text("Window recording");
-            ImGui::Indent();
-            if (ImGui::Button("Start")){
-                if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
-                    int fps_encode = 30;
-                    windowRecordingFileName = "recording_" + Util::now() + ".mp4";
-                    SPDLOG_INFO("Video recording start: {}", windowRecordingFileName);
-                    writer = cv::VideoWriter(
-                            Config::get_instance().resultDirectory() + "/" + windowRecordingFileName,
-                            cv::VideoWriter::fourcc('m', 'p', '4', 'v'), fps_encode,
-                            cv::Size((int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x,
-                                     (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y));
-                    windowRecordingStatus = WINDOW_RECORDING_STATUS::REQUESTED;
-                }
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Stop")){
-                SPDLOG_INFO("Video recording end");
-                windowRecordingStatus = WINDOW_RECORDING_STATUS::PAUSED;
-                writer.release();
-            }
-            ImGui::SameLine();
-            if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
-                ImGui::Text("PAUSED");
-            } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::REQUESTED) {
-                ImGui::Text("REQUESTED");
-            } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::RECORDING) {
-                ImGui::Text("%s", "RECORDING...");
-            }
-            ImGui::Unindent();
+//            ImGui::Text("Window Capture");
+//            ImGui::Indent();
+//            if (ImGui::Button("Capture")){
+//                requestedWindowCapture = true;
+//            }
+//            ImGui::Unindent();
+//            ImGui::Text("Window recording");
+//            ImGui::Indent();
+//            if (ImGui::Button("Start")){
+//                if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
+//                    int fps_encode = 30;
+//                    windowRecordingFileName = "recording_" + Util::now() + ".mp4";
+//                    SPDLOG_INFO("Video recording start: {}", windowRecordingFileName);
+//                    writer = cv::VideoWriter(
+//                            Config::get_instance().resultDirectory() + "/" + windowRecordingFileName,
+//                            cv::VideoWriter::fourcc('m', 'p', '4', 'v'), fps_encode,
+//                            cv::Size((int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x,
+//                                     (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y));
+//                    windowRecordingStatus = WINDOW_RECORDING_STATUS::REQUESTED;
+//                }
+//            }
+//            ImGui::SameLine();
+//            if (ImGui::Button("Stop")){
+//                SPDLOG_INFO("Video recording end");
+//                windowRecordingStatus = WINDOW_RECORDING_STATUS::PAUSED;
+//                writer.release();
+//            }
+//            ImGui::SameLine();
+//            if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
+//                ImGui::Text("PAUSED");
+//            } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::REQUESTED) {
+//                ImGui::Text("REQUESTED");
+//            } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::RECORDING) {
+//                ImGui::Text("%s", "RECORDING...");
+//            }
+//            ImGui::Unindent();
             ImGui::End();
         }
 
@@ -272,10 +273,59 @@ bool Application::run(){
             ImVec2 window_pos = ImVec2(DISTANCE, DISTANCE);
             ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
             ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+            ImGui::SetNextWindowSize(ImVec2(300,40), ImGuiCond_Always);
             ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
             if (ImGui::Begin("GUI", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
             {
                 ImGui::Text("GUI runs at %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            }
+            ImGui::End();
+        }
+
+        {
+            static float f = 0.0f;
+            ImVec2 window_pos = ImVec2(10,50);
+            ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
+            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+            ImGui::SetNextWindowSize(ImVec2(300,160), ImGuiCond_Always);
+            ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+            if (ImGui::Begin("islay Commands", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav)) {
+                ImGui::Text("Window Capture");
+                ImGui::Indent();
+                if (ImGui::Button("Capture")) {
+                    requestedWindowCapture = true;
+                }
+                ImGui::Unindent();
+                ImGui::Text("Window recording");
+                ImGui::Indent();
+                if (ImGui::Button("Start")) {
+                    if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
+                        int fps_encode = 30;
+                        windowRecordingFileName = "recording_" + Util::now() + ".mp4";
+                        SPDLOG_INFO("Video recording start: {}", windowRecordingFileName);
+                        writer = cv::VideoWriter(
+                                Config::get_instance().resultDirectory() + "/" + windowRecordingFileName,
+                                cv::VideoWriter::fourcc('m', 'p', '4', 'v'), fps_encode,
+                                cv::Size((int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x,
+                                         (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y));
+                        windowRecordingStatus = WINDOW_RECORDING_STATUS::REQUESTED;
+                    }
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Stop")) {
+                    SPDLOG_INFO("Video recording end");
+                    windowRecordingStatus = WINDOW_RECORDING_STATUS::PAUSED;
+                    writer.release();
+                }
+                ImGui::SameLine();
+                if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
+                    ImGui::Text("PAUSED");
+                } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::REQUESTED) {
+                    ImGui::Text("REQUESTED");
+                } else if (windowRecordingStatus == WINDOW_RECORDING_STATUS::RECORDING) {
+                    ImGui::Text("%s", "RECORDING...");
+                }
+                ImGui::Unindent();
             }
             ImGui::End();
         }
