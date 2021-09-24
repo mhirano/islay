@@ -52,6 +52,20 @@ public:
         static Logger instance;
         return instance;
     }
+
+    void setExportDirectory(std::string logExportDirectory){
+        auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logExportDirectory + "/log.txt", true);
+        auto ostream_sink = std::make_shared<spdlog::sinks::ostream_sink_mt> (oss);
+        spdlog::sinks_init_list sink_list = { file_sink, console_sink, ostream_sink};
+        for (auto &sink:sink_list) {
+            sink->set_pattern("[%C-%m-%d %H:%M:%S.%f][%^%5l%$] %v");
+        }
+        logger.reset(new spdlog::logger("LOGGER", sink_list.begin(), sink_list.end()));
+        logger->set_level(spdlog::level::trace);
+        spdlog::set_default_logger(logger);
+    }
+
     std::shared_ptr<spdlog::logger> logger;
     std::ostringstream oss;
 };

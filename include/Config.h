@@ -100,7 +100,7 @@ public:
         fclose(fp);
     }
 
-    void setConfig(std::string configFileName) {
+    void loadConfig(std::string configFileName) {
         {
             FILE *fp;
             char buf[512];

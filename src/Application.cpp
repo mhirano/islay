@@ -126,9 +126,13 @@ bool Application::run(){
     cv::VideoWriter writer;
     std::string windowRecordingFileName;
 
-// Setup application
+// Initialize application config
+    Config::get_instance();
+
+// Setup logger
     ExampleAppLog my_log;
-    Config::get_instance(); // initialize Config
+    Logger::get_instance().setExportDirectory(Config::get_instance().resultDirectory());
+
     AppMsgPtr appMsg = std::make_shared<AppMsg>();
     std::shared_ptr<EngineOffline> engine(new EngineOffline(appMsg));
     std::map<std::string, ImageTexture> texturePool;
