@@ -211,36 +211,43 @@ bool Application::run(){
             cv::destroyAllWindows();
         }
 
+        static float imguiImageScale = 1.0f; /// image scale for imgui rendering
         DispMsg *md = appMsg->displayMessenger->receive();
         if (md != nullptr) { // texture pool updated
-            if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI){ /// Use ImGui
+            if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI){
                 texturePool.clear();
                 for (auto img_in_pool:md->pool) {
                     std::string winname = img_in_pool.first;
+                    ImVec2 imgSize(img_in_pool.second.cols, img_in_pool.second.rows);
                     ImGui::Begin(winname.c_str());
                     texturePool[img_in_pool.first].setImage(&img_in_pool.second);
                     ImGui::Image(texturePool[img_in_pool.first].getOpenglTexture(),
-                                 texturePool[img_in_pool.first].getSize());
+                                 ImVec2(imgSize.x * imguiImageScale, imgSize.y * imguiImageScale),
+                                 ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
+                                 );
                     ImGui::End();
                 }
-            } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){ /// Use OpenCV window
+            } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){
                 for (auto& img_in_pool:md->pool) {
                     std::string winname = img_in_pool.first;
-                    cv::namedWindow(winname);
+                    cv::namedWindow(winname,cv::WINDOW_NORMAL);
                     cv::imshow(winname, img_in_pool.second);
                 }
                 cv::waitKey(1);
             }
         } else { // texture pool not updated
             if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI){
-                for (auto &texture: texturePool) { /// Use ImGui
+                for (auto &texture: texturePool) {
                     std::string winname = texture.first;
+                    ImVec2 imgSize = texturePool[texture.first].getSize();
                     ImGui::Begin(winname.c_str());
                     ImGui::Image(texturePool[texture.first].getOpenglTexture(),
-                                 texturePool[texture.first].getSize());
+                                 ImVec2(imgSize.x * imguiImageScale, imgSize.y * imguiImageScale),
+                                 ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
+                                 );
                     ImGui::End();
                 }
-            } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){ /// Use OpenCV window
+            } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){
                 cv::waitKey(1);
             }
         }
