@@ -10,6 +10,7 @@
 bool EngineOffline::run() {
 
     worker = std::thread([this] {
+        workerStatus.store(WORKER_STATUS::RUNNING);
         /*
          * Save config file as of run experiment
          */
@@ -51,11 +52,12 @@ bool EngineOffline::run() {
         if (appMsg->displayMessenger->isClosed()) {
 //            break;
         }
+        workerStatus.store(WORKER_STATUS::IDLE);
     });
 
     SPDLOG_DEBUG("Image processing for a single frame done ...");
 
-    reset();
+//    reset();
 
     return true;
 }

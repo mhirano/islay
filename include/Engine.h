@@ -7,11 +7,18 @@
 
 #include <utility>
 #include <thread>
+#include <atomic>
 #include "AppMsg.h"
 
+enum class WORKER_STATUS {IDLE = 0, RUNNING = 1};
+
 class Engine {
+protected:
+    std::atomic<WORKER_STATUS> workerStatus;
 public:
-    Engine (AppMsgPtr _appMsg): appMsg(std::move(_appMsg)){};
+    Engine (AppMsgPtr _appMsg): appMsg(std::move(_appMsg)){
+        workerStatus.store(WORKER_STATUS::IDLE);
+    };
     virtual bool run() = 0;
     virtual bool reset() = 0;
 //    bool terminate(){
@@ -20,6 +27,8 @@ public:
 //            return true;
 //        }
 //    }
+
+    WORKER_STATUS getWorkerStatus(){return workerStatus.load();}
 
     AppMsgPtr appMsg;
 };
