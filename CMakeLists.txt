@@ -124,9 +124,9 @@ add_library(imgui SHARED
 set_source_files_properties(imgui/examples/libs/gl3w/GL/gl3w.c PROPERTIES COMPILE_FLAGS -Wno-pedantic)
 
 if(UNIX AND NOT APPLE)
-  target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GLEW::glew GL dl )
+  target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GLEW::GLEW GL dl )
 else(APPLE)
-  target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GLEW::glew dl)
+  target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GLEW::GLEW dl)
 endif()
 
 add_executable(${PROJECT_NAME}

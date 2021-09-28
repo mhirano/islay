@@ -7,6 +7,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <map>
+#include <memory>
 #include "InterThreadMessenger.hpp"
 
 struct DispMsg : public MsgData {
