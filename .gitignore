@@ -156,6 +156,9 @@ fabric.properties
 .idea/vcs.xml
 .idea/.name
 .idea/islay.iml
+.idea/deployment.xml
+.idea/other.xml
+.idea/.gitignore
 
 
 ## Exceptions

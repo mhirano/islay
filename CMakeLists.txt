@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.18)
 
 project(islay)
 
@@ -35,8 +35,12 @@ endforeach()
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+# put dependent libraries in ISLAY_LIBS
+set(ISLAY_LIBS "")
+
 # Threads
 find_package(Threads REQUIRED)
+set(ISLAY_LIBS "${ISLAY_LIBS};Threads::Threads")
 
 # Boost
 set(Boost_USE_STATIC_LIBS ON)
@@ -45,9 +49,10 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost REQUIRED system filesystem)
 if(Boost_FOUND)
   message(STATUS "!!! BOOST FOUND !!!")
-  include_directories(${Boost_INCLUDE_DIRS})
   message(STATUS "Boost include dirs: ${Boost_INCLUDE_DIRS}")
   message(STATUS "Boost libraries: ${Boost_LIBRARIES}")
+  include_directories(${Boost_INCLUDE_DIRS})
+  set(ISLAY_LIBS "${ISLAY_LIBS};${Boost_LIBRARIES}")
 else()
   message(STATUS "!!! BOOST NOT FOUND !!!")
 endif()
@@ -56,15 +61,39 @@ endif()
 find_package(OpenCV REQUIRED HINTS ${OpenCV_DIR})
 include_directories(${PROJECT_NAME} ${OpenCV_INCLUDE_DIRS} )
 set(OpenCV_DIR "" CACHE PATH "OpenCV install path")
+set(ISLAY_LIBS "${ISLAY_LIBS};${OpenCV_LIBRARIES}")
 
 # Eigen
 find_package(Eigen3 REQUIRED)
+set(ISLAY_LIBS "${ISLAY_LIBS};Eigen3::Eigen")
 
 # rapidjson
 include_directories(3rdparty/rapidjson/include)
 
 # spdlog
 include_directories(3rdparty/spdlog/include)
+
+# libtorch
+find_package(CUDA)
+find_package(Torch HINTS ${TORCH_DIR})
+if (TORCH_FOUND AND CUDA_FOUND)
+  add_definitions(-DWITH_LIBTORCH)
+  message(STATUS "Found CUDA")
+  message(STATUS "CUDA_INCLUDE_DIRS: ${CUDA_INCLUDE_DIRS}")
+  message(STATUS "CUDA_LIBRARIES: ${CUDA_LIBRARIES}")
+  message(STATUS "CUDA_CUBLAS_LIBRARIES: ${CUDA_CUBLAS_LIBRARIES}")
+  include_directories(${CUDA_INCLUDE_DIRS})
+  set(ISLAY_LIBS "${ISLAY_LIBS};${CUDA_LIBRARIES}")
+
+  message(STATUS "Found libtorch")
+  message(STATUS "TORCH_INCLUDE_DIRS: ${TORCH_INCLUDE_DIRS}")
+  message(STATUS "TORCH_LIBRARIES: ${TORCH_LIBRARIES}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+  include_directories(${TORCH_INCLUDE_DIRS})
+  set(ISLAY_LIBS "${ISLAY_LIBS};${TORCH_LIBRARIES}")
+endif ()
+set(CUDA_TOOLKIT_ROOT_DIR "" CACHE PATH "CUDA Toolkit install path")
+set(TORCH_DIR "" CACHE PATH "libtorch install path")
 
 # Rendering
 find_package(SDL2 REQUIRED)
@@ -128,10 +157,11 @@ if(UNIX AND NOT APPLE)
 else(APPLE)
   target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GLEW::GLEW dl)
 endif()
+set(ISLAY_LIBS "${ISLAY_LIBS};imgui")
 
 add_executable(${PROJECT_NAME}
         src/main.cpp
         src/Application.cpp
         src/Engine.cpp
         )
-target_link_libraries(${PROJECT_NAME} Threads::Threads ${Boost_LIBRARIES} ${OpenCV_LIBRARIES} Eigen3::Eigen imgui)
+target_link_libraries(${PROJECT_NAME} ${ISLAY_LIBS})

@@ -7,6 +7,37 @@
 #include "Config.h"
 #include "Logger.h"
 
+#ifdef WITH_LIBTORCH
+#include <torch/torch.h>
+#endif
+
+namespace Bench {
+    template <typename TimeT = std::chrono::milliseconds, typename F>
+    inline TimeT take_time(F &&f) {
+        const auto begin = std::chrono::high_resolution_clock::now();
+        f();
+        const auto end = std::chrono::high_resolution_clock::now();
+        return std::chrono::duration_cast<TimeT>(end - begin);
+    }
+
+    template<typename TimeT, typename F> struct BenchDelegate {
+        static long delegatedBenchFunc(F&& f){
+            const auto t = take_time<TimeT>(std::forward<F>(f));
+            std::chrono::duration<long, std::milli> t_ = t;
+            printf("%ld [ms]\n", t_.count());
+            SPDLOG_INFO("{} [ms]", t_.count());
+            return t_.count();
+        }
+    };
+
+    template <typename TimeT = std::chrono::milliseconds, typename F>
+    inline long bench(F &&f) {
+        return BenchDelegate<TimeT, F>::delegatedBenchFunc(std::forward<F>(f));
+    }
+
+}
+
+
 bool EngineOffline::run() {
 
     worker = std::thread([this] {
@@ -29,11 +60,19 @@ bool EngineOffline::run() {
         std::string imgName = Config::get_instance().readStringParam("IMG_NAME");
 
         cv::Mat blurred_lena;
-        int k = ceil(rand()%5)*8+1;
-        cv::GaussianBlur( lena, blurred_lena, cv::Size(k,k), 0 );
-
+        Bench::bench([&] {
+            for (int i = 0; i < 10000; i++) {
+                int k = ceil(rand() % 5) * 8 + 1;
+                cv::GaussianBlur(lena, blurred_lena, cv::Size(k, k), 0);
+            }
+        });
         cv::imwrite(Config::get_instance().resultDirectory() + Config::get_instance().readStringParam("BLURRED_IMG"),
                     blurred_lena, std::vector<int>{cv::IMWRITE_PNG_COMPRESSION});
+
+#ifdef WITH_LIBTORCH
+        torch::Tensor tensor = torch::rand({2,3});
+        std::cout << tensor << std::endl;
+#endif
 
         /**
          * Show processed image
