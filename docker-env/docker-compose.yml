@@ -1,0 +1,25 @@
+version: '3'
+services:
+  islay:
+    image: islay
+    container_name: bowmore 
+    hostname: bowmore
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    shm_size: '32gb'
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu, compute, utility]
+    environment:
+      - DISPLAY=${DISPLAY}
+    ports:
+      - "10022:22" # ssh
+    volumes:
+      - "../:/work"
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    tty: true 
