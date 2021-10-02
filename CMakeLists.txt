@@ -73,28 +73,6 @@ include_directories(3rdparty/rapidjson/include)
 # spdlog
 include_directories(3rdparty/spdlog/include)
 
-# libtorch
-find_package(CUDA)
-find_package(Torch HINTS ${TORCH_DIR})
-if (TORCH_FOUND AND CUDA_FOUND)
-  add_definitions(-DWITH_LIBTORCH)
-  message(STATUS "Found CUDA")
-  message(STATUS "CUDA_INCLUDE_DIRS: ${CUDA_INCLUDE_DIRS}")
-  message(STATUS "CUDA_LIBRARIES: ${CUDA_LIBRARIES}")
-  message(STATUS "CUDA_CUBLAS_LIBRARIES: ${CUDA_CUBLAS_LIBRARIES}")
-  include_directories(${CUDA_INCLUDE_DIRS})
-  set(ISLAY_LIBS "${ISLAY_LIBS};${CUDA_LIBRARIES}")
-
-  message(STATUS "Found libtorch")
-  message(STATUS "TORCH_INCLUDE_DIRS: ${TORCH_INCLUDE_DIRS}")
-  message(STATUS "TORCH_LIBRARIES: ${TORCH_LIBRARIES}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
-  include_directories(${TORCH_INCLUDE_DIRS})
-  set(ISLAY_LIBS "${ISLAY_LIBS};${TORCH_LIBRARIES}")
-endif ()
-set(CUDA_TOOLKIT_ROOT_DIR "" CACHE PATH "CUDA Toolkit install path")
-set(TORCH_DIR "" CACHE PATH "libtorch install path")
-
 # Rendering
 find_package(SDL2 REQUIRED)
 find_package(GLFW REQUIRED)

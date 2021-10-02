@@ -7,10 +7,6 @@
 #include "Config.h"
 #include "Logger.h"
 
-#ifdef WITH_LIBTORCH
-#include <torch/torch.h>
-#endif
-
 namespace Bench {
     template <typename TimeT = std::chrono::milliseconds, typename F>
     inline TimeT take_time(F &&f) {
@@ -69,10 +65,6 @@ bool EngineOffline::run() {
         cv::imwrite(Config::get_instance().resultDirectory() + Config::get_instance().readStringParam("BLURRED_IMG"),
                     blurred_lena, std::vector<int>{cv::IMWRITE_PNG_COMPRESSION});
 
-#ifdef WITH_LIBTORCH
-        torch::Tensor tensor = torch::rand({2,3});
-        std::cout << tensor << std::endl;
-#endif
 
         /**
          * Show processed image
