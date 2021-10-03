@@ -8,3 +8,6 @@ Visit [wiki](https://github.com/mhirano/islay/wiki) to know how to work with isl
 
 ### Contact
  masahiro.dll_at_gmail.com (replace `_at_` with `@`)
+
+### License
+islay is licensed under the MIT License, see LICENSE for more information.
