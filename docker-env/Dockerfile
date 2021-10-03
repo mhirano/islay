@@ -80,14 +80,6 @@ COPY opencv_build.sh .
 RUN chmod 755 opencv_build.sh
 RUN ["/bin/bash", "-c", "./opencv_build.sh"]
 
-# libtorch
-WORKDIR /opt
-ARG LIBTORCH_URL=https://download.pytorch.org/libtorch/cu111/libtorch-cxx11-abi-shared-with-deps-1.9.1%2Bcu111.zip
-RUN curl -fsSL --insecure -o libtorch.zip $LIBTORCH_URL && \
-    unzip -q libtorch.zip \
-    && rm libtorch.zip
-ENV TORCH_HOME=/opt/libtorch 
-
 WORKDIR /
 
 CMD ["/usr/sbin/sshd", "-D"]
