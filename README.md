@@ -1,4 +1,4 @@
-# islay – A versatile framework for computer vision research
+# islay ― a versatile framework for computer vision research
 
 ### About
 **islay** is an easy-to-use, visually-aesthetic, cross-platform framework for computer vision research based on Dear ImGui.  
