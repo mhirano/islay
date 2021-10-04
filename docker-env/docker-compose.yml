@@ -12,7 +12,7 @@ services:
     ports:
       - "10022:22" # ssh
     volumes:
-      - "../:/work"
+      - "../:/work/islay"
       - /tmp/.X11-unix:/tmp/.X11-unix
     tty: true 
     #shm_size: '32gb'
