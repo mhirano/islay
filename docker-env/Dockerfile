@@ -55,9 +55,21 @@ RUN apt-get update && apt-get install -yV \
 RUN apt-get update && apt-get install -yV x11-apps openssh-server && \
     mkdir /var/run/sshd && \
     echo 'root:password' | chpasswd && \
-    sed -i 's/#*PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config && \
-    sed -i 's/#PasswordAuthetication/PasswordAuthetication/' /etc/ssh/sshd_config && \
+    sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication/PasswordAuthentication/g' /etc/ssh/sshd_config && \
     sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+
+ENV NOTVISIBLE "in users profile"
+RUN echo "export VISIBLE=now" >> /etc/profile
+
+# SSH user for CLion 
+RUN useradd -ms /bin/bash clion && \
+    echo 'clion:clion' | chpasswd
+
+# Set DISPLAY globally for GDB
+COPY display.env /tmp
+RUN echo $(cat /tmp/display.env) >> /etc/environment && \
+    rm /tmp/display.env
 
 # manual cmake download
 RUN cd /opt && \
@@ -83,4 +95,3 @@ RUN ["/bin/bash", "-c", "./opencv_build.sh"]
 WORKDIR /
 
 CMD ["/usr/sbin/sshd", "-D"]
-# CMD ["jupyter", "lab", "--ip=0.0.0.0", "--allow-root", "--LabApp.token=''"] 
