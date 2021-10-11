@@ -92,6 +92,11 @@ COPY opencv_build.sh .
 RUN chmod 755 opencv_build.sh
 RUN ["/bin/bash", "-c", "./opencv_build.sh"]
 
+# create workspace
+RUN mkdir /work && \
+    mkdir /work/islay && \
+    chown -R clion:clion /work
+
 WORKDIR /
 
 CMD ["/usr/sbin/sshd", "-D"]
