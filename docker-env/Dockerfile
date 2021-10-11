@@ -55,7 +55,7 @@ RUN apt-get update && apt-get install -yV \
 RUN apt-get update && apt-get install -yV x11-apps openssh-server && \
     mkdir /var/run/sshd && \
     echo 'root:password' | chpasswd && \
-    sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#*PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication/PasswordAuthentication/g' /etc/ssh/sshd_config && \
     sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 
@@ -91,6 +91,11 @@ RUN apt-get update && apt-get install -yV intel-mkl-2020.0-088
 COPY opencv_build.sh .
 RUN chmod 755 opencv_build.sh
 RUN ["/bin/bash", "-c", "./opencv_build.sh"]
+
+# create workspace
+RUN mkdir /work && \
+    mkdir /work/islay && \
+    chown -R clion:clion /work
 
 WORKDIR /
 
