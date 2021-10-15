@@ -23,4 +23,4 @@ services:
     #      devices:
     #      - driver: nvidia
     #        count: all
-    #        capabilities: [gpu, compute, utility]
+    #        capabilities: [gpu, graphics, compute, utility]
