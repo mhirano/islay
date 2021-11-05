@@ -5,7 +5,7 @@
 #ifndef ISLAY_CONFIG_H
 #define ISLAY_CONFIG_H
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/filewritestream.h"
@@ -22,8 +22,11 @@ private:
             char buf[512];
 
             // read
-            fp = fopen("config_default.json", "rb");
-
+#ifdef _MSC_VER
+			fp = fopen("../config/config_win_default.json", "rb");
+#else
+			fp = fopen("config_default.json", "rb");
+#endif
             rapidjson::FileReadStream rs(fp, buf, sizeof(buf));
 
             config.ParseStream<rapidjson::ParseFlag::kParseCommentsFlag>(rs);
@@ -53,9 +56,9 @@ private:
         std::string resultParentDirectory_(resultParentDirectoryChar);
         std::string resultDirName = resultParentDirectory_ + "/" + currentDateAndTime;
 
-        const boost::filesystem::path path(resultDirName);
-        boost::system::error_code error;
-        const bool result = boost::filesystem::create_directory(path, error);
+		std::filesystem::path path(resultDirName);
+        std::error_code error;
+        const bool result = std::filesystem::create_directory(path, error);
         if (!result || error) {
             std::cerr << "Failed in creating result directory" << std::endl;
         }
