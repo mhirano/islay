@@ -63,7 +63,7 @@ bool EngineOffline::run() {
             }
         });
         cv::imwrite(Config::get_instance().resultDirectory() + Config::get_instance().readStringParam("BLURRED_IMG"),
-                    blurred_lena, std::vector<int>{cv::IMWRITE_PNG_COMPRESSION});
+                    blurred_lena);
 
 
         /**
