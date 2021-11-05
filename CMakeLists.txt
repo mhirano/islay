@@ -42,21 +42,6 @@ set(ISLAY_LIBS "")
 find_package(Threads REQUIRED)
 set(ISLAY_LIBS "${ISLAY_LIBS};Threads::Threads")
 
-# Boost
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost REQUIRED system filesystem)
-if(Boost_FOUND)
-  message(STATUS "!!! BOOST FOUND !!!")
-  message(STATUS "Boost include dirs: ${Boost_INCLUDE_DIRS}")
-  message(STATUS "Boost libraries: ${Boost_LIBRARIES}")
-  include_directories(${Boost_INCLUDE_DIRS})
-  set(ISLAY_LIBS "${ISLAY_LIBS};${Boost_LIBRARIES}")
-else()
-  message(STATUS "!!! BOOST NOT FOUND !!!")
-endif()
-
 # OpenCV
 find_package(OpenCV REQUIRED HINTS ${OpenCV_DIR})
 include_directories(${PROJECT_NAME} ${OpenCV_INCLUDE_DIRS} )
@@ -100,15 +85,15 @@ set(IMPLOT_SRC
 ######## ######## ######## ######## ######## ######## ######## ########
 # Check C++14 support and activate
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
-if(COMPILER_SUPPORTS_CXX14)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-  set(CMAKE_CXX_STANDARD 14) # C++14...
+CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+if(COMPILER_SUPPORTS_CXX17)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+  set(CMAKE_CXX_STANDARD 17) # C++14...
   set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
   set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
-  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has C++14 support.")
+  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has C++17 support.")
 else()
-  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler.")
+  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support. Please use a different C++ compiler.")
 endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG -g ")
