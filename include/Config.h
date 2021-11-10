@@ -22,8 +22,11 @@ private:
             char buf[512];
 
             // read
-            fp = fopen("config_default.json", "rb");
-
+#ifdef _MSC_VER
+			fp = fopen("../config/config_win_default.json", "rb");
+#else
+			fp = fopen("config_default.json", "rb");
+#endif
             rapidjson::FileReadStream rs(fp, buf, sizeof(buf));
 
             config.ParseStream<rapidjson::ParseFlag::kParseCommentsFlag>(rs);
