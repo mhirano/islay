@@ -142,6 +142,7 @@ bool Application::run(){
     std::shared_ptr<EngineOffline> engine(new EngineOffline(appMsg));
     std::map<std::string, ImageTexture> texturePool;
 
+
     enum SHOW_IMAGE_MODE {IMGUI = 0, OPENCV = 1};
     static int selectedShowImageMode = SHOW_IMAGE_MODE::IMGUI;
 
@@ -175,33 +176,31 @@ bool Application::run(){
             ImGui::ShowDemoWindow();
         }
 
-
-// Commands
         {
-            ImGui::Begin("Commands");
-            /// Check if the worker finished
-
-            static WORKER_STATUS observedWorkerStatus(WORKER_STATUS::IDLE);
-            if (observedWorkerStatus == WORKER_STATUS::RUNNING &&
-                engine->getWorkerStatus() == WORKER_STATUS::IDLE) {
-                engine->reset();
-            }
-            observedWorkerStatus = engine->getWorkerStatus();
-
-            if (ImGui::Button("Command Sample: Blur lena randomly")) {
-                if(observedWorkerStatus == WORKER_STATUS::IDLE){
-                    engine->run();
+            /// Show status
+            ImGui::Begin("Worker status");
+            for(auto& name: engine->getWorkerList()){
+                if (engine->getWorkerStatus(name)== WORKER_STATUS::IDLE) {
+                    engine->resetWorker(name);
+                }
+                WORKER_STATUS observedWorkerStatus;
+                observedWorkerStatus = engine->getWorkerStatus(name);
+                ImGui::SameLine();
+                if (observedWorkerStatus == WORKER_STATUS::IDLE){
+                    ImGui::Text("%s: idle", name.c_str());
+                } else if (observedWorkerStatus == WORKER_STATUS::RUNNING){
+                    ImGui::Text("%s: running", name.c_str());
                 } else {
-                    ImGui::Text("Command ignored");
+                    ImGui::Text("%s: unknown", name.c_str());
                 }
             }
-            ImGui::SameLine();
-            if (observedWorkerStatus == WORKER_STATUS::IDLE){
-                ImGui::Text("Worker: idle");
-            } else if (observedWorkerStatus == WORKER_STATUS::RUNNING){
-                ImGui::Text("Worker: running");
-            } else {
-                ImGui::Text("Worker: unknown");
+            ImGui::End();
+        }
+
+        {
+            ImGui::Begin("Commands");
+            if (ImGui::Button("WorkerTest")) {
+                engine->runTest();
             }
             if (ImGui::Button("Exit")){
                 done = true;
@@ -397,6 +396,9 @@ bool Application::run(){
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
+
+    engine->terminate();
+    engine->reset();
 
     return true;
 }

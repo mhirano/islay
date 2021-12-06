@@ -126,5 +126,5 @@ add_executable(${PROJECT_NAME}
         src/main.cpp
         src/Application.cpp
         src/Engine.cpp
-        )
+        src/WorkerTest.cpp include/WorkerTest.h)
 target_link_libraries(${PROJECT_NAME} ${ISLAY_LIBS})
