@@ -202,7 +202,7 @@ bool Application::run(){
         {
             ImGui::Begin("Commands");
             if (ImGui::Button("WorkerTest")) {
-                engine->runTest();
+                engine->run();
             }
             if (ImGui::Button("Exit")){
                 done = true;

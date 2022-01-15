@@ -33,13 +33,20 @@ WorkerManager<T>::WorkerManager(std::string _workerName, AppMsgPtr _appMsg):
 }
 
 bool EngineOffline::run() {
-    return true;
-}
-
-bool EngineOffline::runTest(){
+    /*
+     * Register a worker with its name
+     */
     registerWorkerWithAppMsg<TestWithAppMsg>("Test");
 
+    /*
+     * You can pass a variable to the worker as a shared pointer.
+     */
     std::shared_ptr<int> hoge(new int(123));
+
+    /*
+     * Run the worker
+     */
     runWorker("Test", hoge);
+
     return true;
 }

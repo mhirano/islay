@@ -16,31 +16,6 @@
 #include <typeinfo>
 #include <cxxabi.h> // for abi::__cxa_demangle
 
-
-namespace Bench {
-    template <typename TimeT = std::chrono::milliseconds, typename F>
-    inline TimeT take_time(F &&f) {
-        const auto begin = std::chrono::high_resolution_clock::now();
-        f();
-        const auto end = std::chrono::high_resolution_clock::now();
-        return std::chrono::duration_cast<TimeT>(end - begin);
-    }
-
-    template<typename TimeT, typename F> struct BenchDelegate {
-        static long delegatedBenchFunc(F&& f){
-            const auto t = take_time<TimeT>(std::forward<F>(f));
-            std::chrono::duration<long, std::milli> t_ = t;
-            SPDLOG_INFO("{} [ms]", t_.count());
-            return t_.count();
-        }
-    };
-
-    template <typename TimeT = std::chrono::milliseconds, typename F>
-    inline long bench(F &&f) {
-        return BenchDelegate<TimeT, F>::delegatedBenchFunc(std::forward<F>(f));
-    }
-}
-
 /**
  * @brief Status list of worker
  *   IDLE: The worker is idle
@@ -282,7 +257,6 @@ public:
         for(auto& [name, worker]: workers) worker.reset();
     };
 
-    bool runTest();
 };
 
 #endif //ISLAY_ENGINE_H
