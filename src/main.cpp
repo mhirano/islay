@@ -1,4 +1,4 @@
-#include "Application.h"
+#include <islay/Application.h>
 
 int main(int, char**)
 {

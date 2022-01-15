@@ -125,6 +125,7 @@ set(ISLAY_LIBS "${ISLAY_LIBS};imgui")
 add_executable(${PROJECT_NAME}
         src/main.cpp
         src/Application.cpp
-        src/Engine.cpp
-        src/WorkerTest.cpp include/WorkerTest.h)
+        src/EngineSample.cpp
+        src/WorkerSample.cpp
+        )
 target_link_libraries(${PROJECT_NAME} ${ISLAY_LIBS})

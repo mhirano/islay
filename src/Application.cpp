@@ -2,17 +2,20 @@
 // Created by Masahiro Hirano <masahiro.dll@gmail.com>
 //
 
-#include "Application.h"
-#include <opencv2/opencv.hpp>
-#include "imgui_apps.h"
-#include "implot.h"
+#include <islay/Application.h>
 
-#include "AppMsg.h"
-#include "Engine.h"
-#include "ImageTexture.h"
-#include "Config.h"
-#include "Logger.h"
-#include "Utility.h"
+#include <opencv2/opencv.hpp>
+
+#include <islay/imgui_apps.h>
+#include <islay/ImageTexture.h>
+#include <implot.h>
+
+#include <islay/AppMsg.h>
+#include <islay/Config.h>
+#include <islay/Logger.h>
+#include <islay/Utility.h>
+
+#include "EngineSample.h"
 
 Application::Application() {
 // Setup SDL
@@ -139,7 +142,7 @@ bool Application::run(){
     Logger::get_instance().setExportDirectory(Config::get_instance().resultDirectory());
 
     AppMsgPtr appMsg = std::make_shared<AppMsg>();
-    std::shared_ptr<EngineOffline> engine(new EngineOffline(appMsg));
+    std::shared_ptr<EngineSample> engine(new EngineSample(appMsg));
     std::map<std::string, ImageTexture> texturePool;
 
 
@@ -201,7 +204,7 @@ bool Application::run(){
 
         {
             ImGui::Begin("Commands");
-            if (ImGui::Button("WorkerTest")) {
+            if (ImGui::Button("Launch WorkerSample")) {
                 engine->run();
             }
             if (ImGui::Button("Exit")){

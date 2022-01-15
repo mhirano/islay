@@ -2,8 +2,8 @@
 // Created by Hirano Masahiro <masahiro.dll@gmail.com>
 //
 
-#ifndef ISLAY_ENGINE_H
-#define ISLAY_ENGINE_H
+#ifndef ISLAY_WORKER_H
+#define ISLAY_WORKER_H
 
 #include <utility>
 #include <thread>
@@ -11,7 +11,7 @@
 #include <iostream>
 #include "AppMsg.h"
 #include "Logger.h"
-#include "InterThreadMessenger.hpp"
+#include "Config.h"
 
 #include <typeinfo>
 #include <cxxabi.h> // for abi::__cxa_demangle
@@ -33,7 +33,7 @@ struct WorkerStatusMessenger : public MsgData {
 /**
  * @brief Base class of worker
  *   All workers implemented by user should publicly inherit this class.
- *   See Test.h.
+ *   See WorkerSample.h.
  */
 class WorkerBase {
 protected:
@@ -43,8 +43,8 @@ public:
     explicit WorkerBase():
             workerStatusMessenger(new InterThreadMessenger<WorkerStatusMessenger>) {};
     explicit WorkerBase(AppMsgPtr _appMsg):
-        appMsg(_appMsg),
-        workerStatusMessenger(new InterThreadMessenger<WorkerStatusMessenger>) {};
+            appMsg(_appMsg),
+            workerStatusMessenger(new InterThreadMessenger<WorkerStatusMessenger>) {};
     virtual bool run(const std::shared_ptr<void> data) = 0;
     bool requestTerminate(){
         auto dm = workerStatusMessenger->prepareMsg();
@@ -73,17 +73,17 @@ public:
  *   Users should use this manager to control workers.
  *   To register a worker:
  *       [with application messenger]
- *         registerWorkerWithAppMsg<TestWithAppMsg>("TestWith");
+ *         registerWorkerWithAppMsg<WorkerSampleWithAppMsg>("WorkerSampleWithAppMsg");
  *       [without application messenger]
- *         registerWorker<Test>("Test");
+ *         registerWorker<WorkerSample>("WorkerSample");
  *   To run and reset a worker:
  *       [without a paremeter]
- *			runWorker("Test");
- *          resetWorker("Test");
+ *			runWorker("WorkerSample");
+ *          resetWorker("WorkerSample");
  *       [with a parameter]
  *          int hoge = 1;
- *          runWorker("TestWith", &hoge);
- *          resetWorker("TestWith");
+ *          runWorker("WorkerSampleWithParameter", &hoge);
+ *          resetWorker("WorkerSampleWithParameter");
  *
  *   See EngineOffline::runTest().
  */
@@ -103,8 +103,24 @@ public:
      * @param _appMsg Application Messenger. Primary used for inter-thread communication.
      *
      */
-    explicit WorkerManager(std::string _workerName);
-    explicit WorkerManager(std::string _workerName, AppMsgPtr _appMsg);
+    explicit WorkerManager(std::string _workerName)
+            :workerName(std::move(_workerName)),
+             status(WORKER_STATUS::IDLE),
+             t(std::move(std::make_shared<T>()))
+    {
+        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName)");
+        std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
+        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
+    }
+
+    explicit WorkerManager(std::string _workerName, AppMsgPtr _appMsg)
+            : workerName(std::move(_workerName)),
+              status(WORKER_STATUS::IDLE),
+              t(std::move(std::make_shared<T>(_appMsg))) {
+        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName, AppMsgPtr _appMsg)");
+        std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
+        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
+    }
 
     /**
      * Move constructor
@@ -180,83 +196,5 @@ public:
     }
 };
 
-class Engine {
-protected:
-    std::map<std::string, WorkerManager<WorkerBase>> workers;
-    AppMsgPtr appMsg;
-public:
-    Engine (AppMsgPtr _appMsg): appMsg(std::move(_appMsg)){
-    };
 
-    virtual ~Engine(){
-        workers.clear();
-    };
-
-    virtual bool run() = 0;
-    virtual bool reset() = 0;
-    bool terminate(){
-        for (auto &[name, worker]: workers) worker.terminate();
-        return true;
-    }
-
-    // Register worker
-    template <class T>
-    bool registerWorker(std::string name){
-        auto [t,b] = workers.try_emplace(name, std::move(WorkerManager<T>(name)));
-        return b;
-    };
-
-    template <class T>
-    bool registerWorkerWithAppMsg(std::string name){
-        if(isWorkerExist(name)){
-            return true;
-        }
-        auto [t, b] = workers.try_emplace(name, std::move(WorkerManager<T>(name, appMsg)));
-        return b;
-    };
-
-    bool isWorkerExist(std::string name){
-        if(workers.count(name) == 0){
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    bool runWorker(std::string name, std::shared_ptr<void> data = nullptr) {
-        return workers.at(name).runWorker(data);
-    }
-
-    bool resetWorker(std::string name) {
-        workers.at(name).status.store(WORKER_STATUS::IDLE);
-        return workers.at(name).reset();
-    }
-
-    WORKER_STATUS getWorkerStatus(std::string name){
-        return workers.at(name).getStatus();
-    }
-
-    std::vector<std::string> getWorkerList(){
-        std::vector<std::string> names;
-        for (auto&[name, worker]: workers) {
-            names.emplace_back(name);
-        }
-        return std::move(names);
-    }
-
-};
-
-class EngineOffline: public Engine{
-public:
-    EngineOffline(AppMsgPtr _appMsg): Engine(std::move(_appMsg)){};
-    ~EngineOffline(){
-        reset();
-    }
-    bool run() override;
-    bool reset() override {
-        for(auto& [name, worker]: workers) worker.reset();
-    };
-
-};
-
-#endif //ISLAY_ENGINE_H
+#endif //ISLAY_WORKER_H

@@ -2,17 +2,18 @@
 // Created by Hirano Masahiro <masahiro.dll@gmail.com>
 //
 
-#include "WorkerTest.h"
-#include "Config.h"
-#include "Utility.h"
+#include "WorkerSample.h"
 
-bool Test::run(const std::shared_ptr<void> data) {
-    printf("Test::run(void*)\n");
+#include <opencv2/opencv.hpp>
+#include <islay/Utility.h>
+
+bool WorkerSample::run(const std::shared_ptr<void> data) {
+    printf("WorkerSample::run(void*)\n");
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     return true;
 }
 
-bool TestWithAppMsg::run(const std::shared_ptr<void> data){
+bool WorkerSampleWithAppMsg::run(const std::shared_ptr<void> data){
     /*
      * Save config file as of run experiment
      */

@@ -6,9 +6,9 @@
 #define ISLAY_CONFIG_H
 
 #include <filesystem>
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
-#include "rapidjson/filewritestream.h"
+#include <rapidjson/document.h>
+#include <rapidjson/filereadstream.h>
+#include <rapidjson/filewritestream.h>
 #include <rapidjson/prettywriter.h>
 
 #include <Eigen/Core>
