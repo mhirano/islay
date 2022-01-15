@@ -58,8 +58,7 @@ bool TestWithAppMsg::run(const std::shared_ptr<void> data){
     cv::imwrite(Config::get_instance().resultDirectory() + Config::get_instance().readStringParam("BLURRED_IMG"),
                 blurred_lena);
 
-    printf("TestWithAppMsg::run(void*)\n");
     std::shared_ptr<int> i = (std::static_pointer_cast<int>) (data);
-    printf("%d\n", *i);
+    SPDLOG_DEBUG("Received value from EngineOffline::runTest: {}", *i);
     return true;
 }

@@ -30,7 +30,6 @@ namespace Bench {
         static long delegatedBenchFunc(F&& f){
             const auto t = take_time<TimeT>(std::forward<F>(f));
             std::chrono::duration<long, std::milli> t_ = t;
-            printf("%ld [ms]\n", t_.count());
             SPDLOG_INFO("{} [ms]", t_.count());
             return t_.count();
         }
@@ -47,10 +46,10 @@ namespace Bench {
  *   IDLE: The worker is idle
  *   RUNNING: The worker is running
  *   TERMINATE_REQUESTED: The worker is running but termination requested
+ *   JOINABLE: The worker is waiting its thread to be joined
  *
  */
-enum class WORKER_STATUS {IDLE = 0, RUNNING = 1, TERMINATE_REQUESTED = 2};
-
+enum class WORKER_STATUS {IDLE = 0, RUNNING = 1, TERMINATE_REQUESTED = 2, JOINABLE = 3};
 
 struct WorkerStatusMessenger : public MsgData {
     WORKER_STATUS workerStatus = WORKER_STATUS::IDLE;
@@ -58,7 +57,7 @@ struct WorkerStatusMessenger : public MsgData {
 
 /**
  * @brief Base class of worker
- *   All class implemented by user should publicly inherit this class.
+ *   All workers implemented by user should publicly inherit this class.
  *   See Test.h.
  */
 class WorkerBase {
@@ -196,9 +195,11 @@ public:
                 SPDLOG_INFO("{} launched", workerName);
                 status.store(WORKER_STATUS::RUNNING);
                 t->run(data);
-                status.store(WORKER_STATUS::IDLE);
+                status.store(WORKER_STATUS::JOINABLE);
                 SPDLOG_INFO("{} finished", workerName);
             });
+        } else {
+            SPDLOG_DEBUG("{} is already running", workerName);
         }
         return true;
     }
@@ -232,6 +233,9 @@ public:
 
     template <class T>
     bool registerWorkerWithAppMsg(std::string name){
+        if(isWorkerExist(name)){
+            return true;
+        }
         auto [t, b] = workers.try_emplace(name, std::move(WorkerManager<T>(name, appMsg)));
         return b;
     };
@@ -249,6 +253,7 @@ public:
     }
 
     bool resetWorker(std::string name) {
+        workers.at(name).status.store(WORKER_STATUS::IDLE);
         return workers.at(name).reset();
     }
 

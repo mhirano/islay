@@ -180,16 +180,18 @@ bool Application::run(){
             /// Show status
             ImGui::Begin("Worker status");
             for(auto& name: engine->getWorkerList()){
-                if (engine->getWorkerStatus(name)== WORKER_STATUS::IDLE) {
-                    engine->resetWorker(name);
-                }
                 WORKER_STATUS observedWorkerStatus;
                 observedWorkerStatus = engine->getWorkerStatus(name);
+                if (observedWorkerStatus == WORKER_STATUS::JOINABLE) {
+                    engine->resetWorker(name);
+                }
                 ImGui::SameLine();
                 if (observedWorkerStatus == WORKER_STATUS::IDLE){
                     ImGui::Text("%s: idle", name.c_str());
                 } else if (observedWorkerStatus == WORKER_STATUS::RUNNING){
                     ImGui::Text("%s: running", name.c_str());
+                } else if (observedWorkerStatus == WORKER_STATUS::JOINABLE){
+                    ImGui::Text("%s: joinable", name.c_str());
                 } else {
                     ImGui::Text("%s: unknown", name.c_str());
                 }

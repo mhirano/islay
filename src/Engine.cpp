@@ -37,15 +37,9 @@ bool EngineOffline::run() {
 }
 
 bool EngineOffline::runTest(){
+    registerWorkerWithAppMsg<TestWithAppMsg>("Test");
 
-    // Register if worker not exist
-    if(!isWorkerExist("Test")){
-        registerWorkerWithAppMsg<TestWithAppMsg>("Test");
-    }
-
-    if(workers.at("Test").getStatus() == WORKER_STATUS::IDLE){
-        std::shared_ptr<int> hoge(new int(123));
-        runWorker("Test", hoge);
-    }
+    std::shared_ptr<int> hoge(new int(123));
+    runWorker("Test", hoge);
     return true;
 }
