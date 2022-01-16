@@ -239,7 +239,6 @@ bool Application::run(){
                     } else {
                         ImGui::Text("%s: unknown", name.c_str());
                     }
-//                    ImGui::NewLine();
                 }
             }
             ImGui::Separator();

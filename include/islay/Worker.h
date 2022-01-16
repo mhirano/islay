@@ -149,11 +149,9 @@ public:
     bool terminate(){
         if (status.load() == WORKER_STATUS::RUNNING){
             status.store(WORKER_STATUS::TERMINATE_REQUESTED);
+            t->requestTerminate();
             SPDLOG_DEBUG("***********************TERMINATING {}**********************", workerName);
         }
-
-        t->requestTerminate();
-
         return true;
     };
 
