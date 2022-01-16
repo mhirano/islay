@@ -43,11 +43,11 @@ bool WorkerSampleWithAppMsg::run(const std::shared_ptr<void> data){
             Config::get_instance().readStringParam("IMG_PATH"));
     std::string imgName = Config::get_instance().readStringParam("IMG_NAME");
 
-    cv::Mat blurred_lena;
     auto elapsedTimeInMs = Util::Bench::bench([&] {
         for (int i = 0; i < 3000; i++) {
+            cv::Mat blurred_lena;
             int k = ceil(rand() % 5) * 8 + 1;
-            cv::GaussianBlur(lena, blurred_lena, cv::Size(k, k), 0);
+            cv::GaussianBlur(lena, blurred_lena, cv::Size(k, k), 10);
 
             /**
              * Show processed image
@@ -60,7 +60,7 @@ bool WorkerSampleWithAppMsg::run(const std::shared_ptr<void> data){
             DispMsg *dm;
             dm = appMsg->displayMessenger->prepareMsg();
             dm->pool[imgName.c_str()] = lena;
-            dm->pool["blurred lena"] = blurred_lena;
+            dm->pool["blurred lena"] = std::move(blurred_lena);
             appMsg->displayMessenger->send();
 
             if (checkIfTerminateRequested()) {
@@ -70,9 +70,6 @@ bool WorkerSampleWithAppMsg::run(const std::shared_ptr<void> data){
     });
 
     SPDLOG_INFO("WorkerSampleWithAppMsg took {}ms", elapsedTimeInMs);
-
-    cv::imwrite(Config::get_instance().resultDirectory() + Config::get_instance().readStringParam("BLURRED_IMG"),
-                blurred_lena);
 
     return true;
 }
