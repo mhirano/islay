@@ -143,7 +143,7 @@ bool Application::run(){
     AppMsgPtr appMsg = std::make_shared<AppMsg>();
     std::shared_ptr<EngineSample> engineSample(new EngineSample(appMsg));
     std::map<std::string, ImageTexture> texturePool;
-
+    std::map<std::string, ImVec2> textureSizePool;
 
     enum SHOW_IMAGE_MODE {IMGUI = 0, OPENCV = 1};
     static int selectedShowImageMode = SHOW_IMAGE_MODE::IMGUI;
@@ -254,6 +254,7 @@ bool Application::run(){
         }
 
         static float imguiImageScale = 1.0f; /// image scale for imgui rendering
+        static int windowMarginX = 0, windowMarginY = 0;
         DispMsg *md = appMsg->displayMessenger->receive();
         if (md != nullptr) { // texture pool updated
             if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI){
@@ -261,12 +262,17 @@ bool Application::run(){
                 for (auto img_in_pool:md->pool) {
                     std::string winname = img_in_pool.first;
                     ImVec2 imgSize(img_in_pool.second.cols, img_in_pool.second.rows);
-                    ImGui::Begin(winname.c_str());
+                    if (textureSizePool.count(img_in_pool.first) == 0) {
+                        ImGui::SetNextWindowSize(imgSize);
+                    }
+                    ImGui::Begin(winname.c_str(), nullptr );
                     texturePool[img_in_pool.first].setImage(&img_in_pool.second);
+                    // TODO: keep aspect ratio
                     ImGui::Image(texturePool[img_in_pool.first].getOpenglTexture(),
-                                 ImVec2(imgSize.x * imguiImageScale, imgSize.y * imguiImageScale),
+                                 ImVec2(textureSizePool[img_in_pool.first].x-20, textureSizePool[img_in_pool.first].y-40),
                                  ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
-                                 );
+                    );
+                    textureSizePool[img_in_pool.first] = ImGui::GetWindowSize();
                     ImGui::End();
                 }
             } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){
@@ -282,11 +288,13 @@ bool Application::run(){
                 for (auto &texture: texturePool) {
                     std::string winname = texture.first;
                     ImVec2 imgSize = texturePool[texture.first].getSize();
-                    ImGui::Begin(winname.c_str());
+                    ImGui::Begin(winname.c_str(), nullptr );
+                    // TODO: keep aspect ratio
                     ImGui::Image(texturePool[texture.first].getOpenglTexture(),
-                                 ImVec2(imgSize.x * imguiImageScale, imgSize.y * imguiImageScale),
+                                 ImVec2(textureSizePool[texture.first].x - 20, textureSizePool[texture.first].y - 40),
                                  ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
-                                 );
+                    );
+                    textureSizePool[texture.first] = ImGui::GetWindowSize();
                     ImGui::End();
                 }
             } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){

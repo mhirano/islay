@@ -45,7 +45,7 @@ bool WorkerSampleWithAppMsg::run(const std::shared_ptr<void> data){
 
     cv::Mat blurred_lena;
     auto elapsedTimeInMs = Util::Bench::bench([&] {
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 3000; i++) {
             int k = ceil(rand() % 5) * 8 + 1;
             cv::GaussianBlur(lena, blurred_lena, cv::Size(k, k), 0);
 
