@@ -178,14 +178,13 @@ bool Application::run(){
             ImGui::ShowDemoWindow();
         }
 
-
         {
             const float DISTANCE = 10.0f;
             static float f = 0.0f;
             ImVec2 window_pos = ImVec2(DISTANCE, 210);
             ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
             ImGui::SetNextWindowPos(window_pos, ImGuiCond_Appearing, window_pos_pivot);
-            ImGui::SetNextWindowSize(ImVec2(300,300), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(300,600), ImGuiCond_Always);
             ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
             if(ImGui::Begin("Command palette", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
             {
@@ -221,8 +220,8 @@ bool Application::run(){
             {
                 /// Show status
                 ImGui::Text("Status:");
-                ImGui::NewLine();
                 for (auto &name: engineSample->getWorkerList()) {
+                    ImGui::NewLine();
                     WORKER_STATUS observedWorkerStatus;
                     observedWorkerStatus = engineSample->getWorkerStatus(name);
                     if (observedWorkerStatus == WORKER_STATUS::JOINABLE) {
@@ -240,6 +239,17 @@ bool Application::run(){
                     } else {
                         ImGui::Text("%s: unknown", name.c_str());
                     }
+//                    ImGui::NewLine();
+                }
+            }
+            ImGui::Separator();
+            {
+                // TODO: make items clickable and the clicked window be active
+                ImGui::Text("Images:");
+                ImGui::NewLine();
+                for (const auto &texture: texturePool) {
+                    ImGui::SameLine();
+                    ImGui::Text("%s", texture.first.c_str());
                     ImGui::NewLine();
                 }
             }
@@ -261,18 +271,20 @@ bool Application::run(){
                 texturePool.clear();
                 for (auto img_in_pool:md->pool) {
                     std::string winname = img_in_pool.first;
-                    ImVec2 imgSize(img_in_pool.second.cols, img_in_pool.second.rows);
                     if (textureSizePool.count(img_in_pool.first) == 0) {
-                        ImGui::SetNextWindowSize(imgSize);
+                        ImGui::SetNextWindowSize(ImVec2(img_in_pool.second.cols, img_in_pool.second.rows));
+                        textureSizePool[winname] = ImVec2(img_in_pool.second.cols, img_in_pool.second.rows);
+                    } else {
+                        ImGui::SetNextWindowSize(ImVec2(textureSizePool[winname].x, textureSizePool[winname].y));
                     }
                     ImGui::Begin(winname.c_str(), nullptr );
                     texturePool[img_in_pool.first].setImage(&img_in_pool.second);
-                    // TODO: keep aspect ratio
                     ImGui::Image(texturePool[img_in_pool.first].getOpenglTexture(),
                                  ImVec2(textureSizePool[img_in_pool.first].x-20, textureSizePool[img_in_pool.first].y-40),
                                  ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
                     );
-                    textureSizePool[img_in_pool.first] = ImGui::GetWindowSize();
+                    float scale = std::min<float>(ImGui::GetWindowSize().x/textureSizePool[winname].x, ImGui::GetWindowSize().y/textureSizePool[winname].y);
+                    textureSizePool[winname] = ImVec2(textureSizePool[winname].x*scale, textureSizePool[winname].y*scale);
                     ImGui::End();
                 }
             } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){
@@ -287,14 +299,14 @@ bool Application::run(){
             if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI){
                 for (auto &texture: texturePool) {
                     std::string winname = texture.first;
-                    ImVec2 imgSize = texturePool[texture.first].getSize();
+                    ImGui::SetNextWindowSize(ImVec2(textureSizePool[winname].x, textureSizePool[winname].y));
                     ImGui::Begin(winname.c_str(), nullptr );
-                    // TODO: keep aspect ratio
                     ImGui::Image(texturePool[texture.first].getOpenglTexture(),
-                                 ImVec2(textureSizePool[texture.first].x - 20, textureSizePool[texture.first].y - 40),
+                                 ImVec2(textureSizePool[winname].x - 20, textureSizePool[winname].y - 40),
                                  ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
                     );
-                    textureSizePool[texture.first] = ImGui::GetWindowSize();
+                    float scale = std::min<float>(ImGui::GetWindowSize().x/textureSizePool[winname].x, ImGui::GetWindowSize().y/textureSizePool[winname].y);
+                    textureSizePool[texture.first] = ImVec2(textureSizePool[texture.first].x*scale, textureSizePool[texture.first].y*scale);
                     ImGui::End();
                 }
             } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){
