@@ -8,8 +8,14 @@
 #include <islay/Utility.h>
 
 bool WorkerSample::run(const std::shared_ptr<void> data) {
-    printf("WorkerSample::run(void*)\n");
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    SPDLOG_DEBUG("Calling WorkerSample::run");
+    for (int i = 1; i <= 5; i++) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        SPDLOG_DEBUG("\tprocessing for {} second", i);
+        if (checkIfTerminateRequested()) {
+            break;
+        }
+    }
     return true;
 }
 
@@ -18,6 +24,12 @@ bool WorkerSampleWithAppMsg::run(const std::shared_ptr<void> data){
      * Save config file as of run experiment
      */
     Config::get_instance().saveConfig();
+
+    /*
+     * Retrieve data passed by user
+     */
+    std::shared_ptr<int> i = (std::static_pointer_cast<int>) (data);
+    SPDLOG_DEBUG("Received value from EngineOffline::runTest: {}", *i);
 
     /**
      * Main process
@@ -32,7 +44,7 @@ bool WorkerSampleWithAppMsg::run(const std::shared_ptr<void> data){
     std::string imgName = Config::get_instance().readStringParam("IMG_NAME");
 
     cv::Mat blurred_lena;
-    Util::Bench::bench([&] {
+    auto elapsedTimeInMs = Util::Bench::bench([&] {
         for (int i = 0; i < 10000; i++) {
             int k = ceil(rand() % 5) * 8 + 1;
             cv::GaussianBlur(lena, blurred_lena, cv::Size(k, k), 0);
@@ -57,10 +69,10 @@ bool WorkerSampleWithAppMsg::run(const std::shared_ptr<void> data){
         }
     });
 
+    SPDLOG_INFO("WorkerSampleWithAppMsg took {}ms", elapsedTimeInMs);
+
     cv::imwrite(Config::get_instance().resultDirectory() + Config::get_instance().readStringParam("BLURRED_IMG"),
                 blurred_lena);
 
-    std::shared_ptr<int> i = (std::static_pointer_cast<int>) (data);
-    SPDLOG_DEBUG("Received value from EngineOffline::runTest: {}", *i);
     return true;
 }

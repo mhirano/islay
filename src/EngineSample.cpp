@@ -6,6 +6,24 @@
 #include "WorkerSample.h"
 
 bool EngineSample::run() {
+    return true;
+}
+
+bool EngineSample::runWorkerSample() {
+    /*
+     * Register a worker with its name
+     */
+    registerWorker<WorkerSample>("WorkerSample");
+
+    /*
+     * Run the worker
+     */
+    runWorker("WorkerSample");
+
+    return true;
+}
+
+bool EngineSample::runWorkerSampleWithAppMsg() {
     /*
      * Register a worker with its name
      */

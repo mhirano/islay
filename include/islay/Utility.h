@@ -5,18 +5,10 @@
 #ifndef ISLAY_UTILITY_H
 #define ISLAY_UTILITY_H
 
-//#include <time.h>
 #include <iostream>
-//#include <vector>
-//#include <numeric>
-//#include <fstream>
-//#include <cmath>
 #include <chrono>
-//#include <sstream>
 
 #include <opencv2/opencv.hpp>
-
-//#define PI 3.14159265358979323846
 
 namespace Util {
 

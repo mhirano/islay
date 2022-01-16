@@ -8,21 +8,30 @@
 #include "AppMsg.h"
 #include "Worker.h"
 
-class Engine {
+class EngineBase {
 protected:
     std::map<std::string, WorkerManager<WorkerBase>> workers;
     AppMsgPtr appMsg;
 public:
-    Engine (AppMsgPtr _appMsg): appMsg(std::move(_appMsg)){
+    EngineBase (AppMsgPtr _appMsg): appMsg(std::move(_appMsg)){
     };
 
-    virtual ~Engine(){
+    virtual ~EngineBase(){
         workers.clear();
     };
 
     virtual bool run() = 0;
     virtual bool reset() = 0;
-    bool terminate(){
+
+    bool terminateWorker(const std::string name) {
+        if (!isWorkerExist(name)) {
+            SPDLOG_DEBUG("Worker not exist:{}", name);
+            return false;
+        }
+        return workers.at(name).terminate();
+    }
+
+    bool terminateAll(){
         for (auto &[name, worker]: workers) worker.terminate();
         return true;
     }
@@ -43,7 +52,7 @@ public:
         return b;
     };
 
-    bool isWorkerExist(std::string name){
+    bool isWorkerExist(const std::string name){
         if(workers.count(name) == 0){
             return false;
         } else {

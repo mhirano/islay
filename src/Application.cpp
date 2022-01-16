@@ -4,16 +4,15 @@
 
 #include <islay/Application.h>
 
-#include <opencv2/opencv.hpp>
-
 #include <islay/imgui_apps.h>
 #include <islay/ImageTexture.h>
-#include <implot.h>
-
 #include <islay/AppMsg.h>
 #include <islay/Config.h>
 #include <islay/Logger.h>
 #include <islay/Utility.h>
+#include <implot.h>
+
+#include <opencv2/opencv.hpp>
 
 #include "EngineSample.h"
 
@@ -142,7 +141,7 @@ bool Application::run(){
     Logger::get_instance().setExportDirectory(Config::get_instance().resultDirectory());
 
     AppMsgPtr appMsg = std::make_shared<AppMsg>();
-    std::shared_ptr<EngineSample> engine(new EngineSample(appMsg));
+    std::shared_ptr<EngineSample> engineSample(new EngineSample(appMsg));
     std::map<std::string, ImageTexture> texturePool;
 
 
@@ -179,36 +178,70 @@ bool Application::run(){
             ImGui::ShowDemoWindow();
         }
 
-        {
-            /// Show status
-            ImGui::Begin("Worker status");
-            for(auto& name: engine->getWorkerList()){
-                WORKER_STATUS observedWorkerStatus;
-                observedWorkerStatus = engine->getWorkerStatus(name);
-                if (observedWorkerStatus == WORKER_STATUS::JOINABLE) {
-                    engine->resetWorker(name);
-                }
-                ImGui::SameLine();
-                if (observedWorkerStatus == WORKER_STATUS::IDLE){
-                    ImGui::Text("%s: idle", name.c_str());
-                } else if (observedWorkerStatus == WORKER_STATUS::RUNNING){
-                    ImGui::Text("%s: running", name.c_str());
-                } else if (observedWorkerStatus == WORKER_STATUS::JOINABLE){
-                    ImGui::Text("%s: joinable", name.c_str());
-                } else {
-                    ImGui::Text("%s: unknown", name.c_str());
-                }
-            }
-            ImGui::End();
-        }
 
         {
-            ImGui::Begin("Commands");
-            if (ImGui::Button("Launch WorkerSample")) {
-                engine->run();
+            const float DISTANCE = 10.0f;
+            static float f = 0.0f;
+            ImVec2 window_pos = ImVec2(DISTANCE, 210);
+            ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
+            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Appearing, window_pos_pivot);
+            ImGui::SetNextWindowSize(ImVec2(300,300), ImGuiCond_Always);
+            ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+            if(ImGui::Begin("Command palette", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+            {
+                ImGui::Text("Workers:");
+                ImGui::NewLine(); ImGui::SameLine();
+                ImGui::Text("WorkerSample");
+                ImGui::NewLine(); ImGui::SameLine();
+                if (ImGui::Button("Launch##WorkerSample")) {
+                    engineSample->runWorkerSample();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Terminate##WorkerSample")) {
+                    engineSample->terminateWorker("WorkerSample");
+                }
+                ImGui::NewLine(); ImGui::SameLine();
+                ImGui::Text("WorkerSampleWithAppMsg");
+                ImGui::NewLine(); ImGui::SameLine();
+                if (ImGui::Button("Launch##WorkerSampleWithAppMsg")) {
+                    engineSample->runWorkerSampleWithAppMsg();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Terminate##WorkerSampleWithAppMsg")) {
+                    engineSample->terminateWorker("WorkerSampleWithAppMsg");
+                }
+                ImGui::NewLine(); ImGui::SameLine();
+                ImGui::Text("Exit program");
+                ImGui::NewLine(); ImGui::SameLine();
+                if (ImGui::Button("Exit")) {
+                    done = true;
+                }
             }
-            if (ImGui::Button("Exit")){
-                done = true;
+            ImGui::Separator();
+            {
+                /// Show status
+                ImGui::Text("Status:");
+                ImGui::NewLine();
+                for (auto &name: engineSample->getWorkerList()) {
+                    WORKER_STATUS observedWorkerStatus;
+                    observedWorkerStatus = engineSample->getWorkerStatus(name);
+                    if (observedWorkerStatus == WORKER_STATUS::JOINABLE) {
+                        engineSample->resetWorker(name);
+                    }
+                    ImGui::SameLine();
+                    if (observedWorkerStatus == WORKER_STATUS::IDLE) {
+                        ImGui::Text("%s: idle", name.c_str());
+                    } else if (observedWorkerStatus == WORKER_STATUS::RUNNING) {
+                        ImGui::Text("%s: running", name.c_str());
+                    } else if (observedWorkerStatus == WORKER_STATUS::TERMINATE_REQUESTED) {
+                        ImGui::Text("%s: terminate requested", name.c_str());
+                    } else if (observedWorkerStatus == WORKER_STATUS::JOINABLE) {
+                        ImGui::Text("%s: joinable", name.c_str());
+                    } else {
+                        ImGui::Text("%s: unknown", name.c_str());
+                    }
+                    ImGui::NewLine();
+                }
             }
             ImGui::End();
         }
@@ -293,6 +326,13 @@ bool Application::run(){
             my_log.AddLog( "%s", Logger::get_instance().oss.str().c_str() );
             Logger::get_instance().oss.str("");
             Logger::get_instance().oss.clear();
+            const float DISTANCE = 10.0f;
+			ImVec2 window_size = io.DisplaySize;
+			ImVec2 window_pos = ImVec2(window_size.x/2, DISTANCE);
+			ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
+			ImGui::SetNextWindowPos(window_pos, ImGuiCond_Appearing, window_pos_pivot);
+			ImGui::SetNextWindowSize(ImVec2(window_size.x/2-DISTANCE,window_size.y-2*DISTANCE), ImGuiCond_Once);
+			ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
             my_log.Draw("Log");
         }
 
@@ -302,7 +342,7 @@ bool Application::run(){
             ImVec2 window_pos = ImVec2(DISTANCE, DISTANCE);
             ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
             ImGui::SetNextWindowPos(window_pos, ImGuiCond_Appearing, window_pos_pivot);
-            ImGui::SetNextWindowSize(ImVec2(300,200), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(300,190), ImGuiCond_Always);
             ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
             if (ImGui::Begin("GUI", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
             {
@@ -402,8 +442,8 @@ bool Application::run(){
         SDL_GL_SwapWindow(window);
     }
 
-    engine->terminate();
-    engine->reset();
+    engineSample->terminateAll();
+    engineSample->reset();
 
     return true;
 }

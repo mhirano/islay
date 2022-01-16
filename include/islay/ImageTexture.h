@@ -5,8 +5,6 @@
 #ifndef ISLAY_IMAGETEXTURE_H
 #define ISLAY_IMAGETEXTURE_H
 
-//#include <cstdio>
-//#include <fstream>
 #include <iostream>
 #include <string>
 

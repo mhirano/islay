@@ -7,9 +7,9 @@
 
 #include <islay/Engine.h>
 
-class EngineSample : public Engine{
+class EngineSample : public EngineBase{
 public:
-    EngineSample(AppMsgPtr _appMsg): Engine(std::move(_appMsg)){};
+    EngineSample(AppMsgPtr _appMsg): EngineBase(std::move(_appMsg)){};
     ~EngineSample(){
         reset();
     }
@@ -17,6 +17,9 @@ public:
     bool reset() override {
         for(auto& [name, worker]: workers) worker.reset();
     };
+
+    bool runWorkerSample();
+    bool runWorkerSampleWithAppMsg();
 };
 
 

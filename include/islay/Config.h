@@ -6,13 +6,12 @@
 #define ISLAY_CONFIG_H
 
 #include <filesystem>
+#include <string>
+#include <Eigen/Core>
 #include <rapidjson/document.h>
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/filewritestream.h>
 #include <rapidjson/prettywriter.h>
-
-#include <Eigen/Core>
-#include <string>
 
 class Config {
 private:

@@ -9,12 +9,14 @@
 #include <thread>
 #include <atomic>
 #include <iostream>
+
+#include <typeinfo>
+#include <cxxabi.h> // for abi::__cxa_demangle
+
 #include "AppMsg.h"
 #include "Logger.h"
 #include "Config.h"
 
-#include <typeinfo>
-#include <cxxabi.h> // for abi::__cxa_demangle
 
 /**
  * @brief Status list of worker
@@ -108,18 +110,18 @@ public:
              status(WORKER_STATUS::IDLE),
              t(std::move(std::make_shared<T>()))
     {
-        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName)");
+//        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName)");
         std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
-        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
+//        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
     }
 
     explicit WorkerManager(std::string _workerName, AppMsgPtr _appMsg)
             : workerName(std::move(_workerName)),
               status(WORKER_STATUS::IDLE),
               t(std::move(std::make_shared<T>(_appMsg))) {
-        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName, AppMsgPtr _appMsg)");
+//        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName, AppMsgPtr _appMsg)");
         std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
-        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
+//        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
     }
 
     /**
@@ -129,15 +131,11 @@ public:
      */
     template <class U>
     explicit WorkerManager(WorkerManager<U>&& mg){
-        SPDLOG_DEBUG("Move constructor of WorkerManager launched");
+//        SPDLOG_DEBUG("Move constructor of WorkerManager launched");
         workerName = std::move(mg.workerName);
         thisThread = std::move(mg.thisThread);
         status.store(mg.status.load());
         t = std::move(mg.t);
-//		int hoge;
-//		std::cout << "mg.t:" << abi::__cxa_demangle(typeid(mg.t).name(), 0, 0, &hoge) << std::endl;
-//		std::cout << "t:" << abi::__cxa_demangle(typeid(t).name(), 0, 0, &hoge) << std::endl;
-//		std::cout << "U:" << abi::__cxa_demangle(typeid(U).name(), 0, 0, &hoge) << std::endl;
     }
 
     ~WorkerManager(){
