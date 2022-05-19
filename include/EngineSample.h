@@ -16,6 +16,7 @@ public:
     bool run() override;
     bool reset() override {
         for(auto& [name, worker]: workers) worker.reset();
+        return true;
     };
 
     bool runWorkerSample();

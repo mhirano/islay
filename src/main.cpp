@@ -1,6 +1,6 @@
 #include <islay/Application.h>
 
-int main(int, char**)
+int WinMain(int, char**)
 {
   Application app;
 

@@ -22,7 +22,7 @@ private:
 
             // read
 #ifdef _MSC_VER
-			fp = fopen("../config/config_win_default.json", "rb");
+			fp = fopen("config_default.json", "rb");
 #else
 			fp = fopen("config_default.json", "rb");
 #endif

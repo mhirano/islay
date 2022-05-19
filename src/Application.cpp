@@ -119,7 +119,8 @@ bool Application::run(){
 //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 //IM_ASSERT(font != NULL);
 #ifdef _MSC_VER
-	ImFont* font = io.Fonts->AddFontFromFileTTF("../../font/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+	ImFont* font = io.Fonts->AddFontFromFileTTF("../font/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+//    ImFont* font = io.Fonts->AddFontFromFileTTF("../../font/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     IM_ASSERT(font != NULL);
 #else
 	ImFont* font = io.Fonts->AddFontFromFileTTF("../font/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());

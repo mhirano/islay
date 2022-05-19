@@ -11,7 +11,10 @@
 #include <iostream>
 
 #include <typeinfo>
+
+#ifdef __GNUC__
 #include <cxxabi.h> // for abi::__cxa_demangle
+#endif
 
 #include "AppMsg.h"
 #include "Logger.h"
@@ -111,7 +114,7 @@ public:
              t(std::move(std::make_shared<T>()))
     {
 //        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName)");
-        std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
+//        std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
 //        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
     }
 
@@ -120,7 +123,7 @@ public:
               status(WORKER_STATUS::IDLE),
               t(std::move(std::make_shared<T>(_appMsg))) {
 //        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName, AppMsgPtr _appMsg)");
-        std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
+//        std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
 //        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
     }
 
