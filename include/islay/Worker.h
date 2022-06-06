@@ -47,6 +47,10 @@ public:
     explicit WorkerBase(AppMsgPtr _appMsg):
             appMsg(_appMsg),
             workerStatusMessenger(new InterThreadMessenger<WorkerStatusMessenger>) {};
+    virtual ~WorkerBase(){
+        delete workerStatusMessenger;
+    };
+
     virtual bool run(const std::shared_ptr<void> data) = 0;
     bool requestTerminate(){
         auto dm = workerStatusMessenger->prepareMsg();
@@ -112,7 +116,7 @@ public:
     {
 //        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName)");
         std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
-//        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
+        SPDLOG_DEBUG("WorkerManager created for class {}", demangledClassName);
     }
 
     explicit WorkerManager(std::string _workerName, AppMsgPtr _appMsg)
@@ -121,7 +125,7 @@ public:
               t(std::move(std::make_shared<T>(_appMsg))) {
 //        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName, AppMsgPtr _appMsg)");
         std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
-//        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
+        SPDLOG_DEBUG("WorkerManager created for class {}", demangledClassName);
     }
 
     /**
@@ -165,10 +169,11 @@ public:
      * @return true if the worker is successfully reset
      */
     bool reset(){
-        if (thisThread.joinable()){
-            thisThread.join();
-            SPDLOG_DEBUG("***********************RESET {}**********************", workerName);
+        if (!thisThread.joinable()){
+            return false;
         }
+        thisThread.join();
+        SPDLOG_DEBUG("***********************RESET {}**********************", workerName);
         return true;
     };
 
@@ -179,14 +184,14 @@ public:
     bool runWorker(std::shared_ptr<void> data = nullptr){
         if (status.load() == WORKER_STATUS::IDLE) {
             thisThread = std::thread([this, data] {
-                SPDLOG_INFO("{} launched", workerName);
+                SPDLOG_INFO("Worker launched: {}", workerName);
                 status.store(WORKER_STATUS::RUNNING);
                 t->run(data);
                 status.store(WORKER_STATUS::JOINABLE);
-                SPDLOG_INFO("{} finished", workerName);
+                SPDLOG_INFO("Worker completed: {}", workerName);
             });
         } else {
-            SPDLOG_DEBUG("{} is already running", workerName);
+            SPDLOG_INFO("{} is already running", workerName);
         }
         return true;
     }

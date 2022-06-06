@@ -14,7 +14,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "EngineSample.h"
+#include "Engine.h"
 
 Application::Application() {
 // Setup SDL
@@ -141,7 +141,7 @@ bool Application::run(){
     Logger::get_instance().setExportDirectory(Config::get_instance().resultDirectory());
 
     AppMsgPtr appMsg = std::make_shared<AppMsg>();
-    std::shared_ptr<EngineSample> engineSample(new EngineSample(appMsg));
+    std::shared_ptr<Engine> engineSample(new Engine(appMsg));
     std::map<std::string, ImageTexture> texturePool;
     std::map<std::string, ImVec2> textureSizePool;
 
@@ -208,6 +208,12 @@ bool Application::run(){
                 ImGui::SameLine();
                 if (ImGui::Button("Terminate##WorkerSampleWithAppMsg")) {
                     engineSample->terminateWorker("WorkerSampleWithAppMsg");
+                }
+                ImGui::NewLine(); ImGui::SameLine();
+                ImGui::Text("Delete workers");
+                ImGui::NewLine(); ImGui::SameLine();
+                if (ImGui::Button("Delete workers")) {
+                    engineSample->deleteAllWorker();
                 }
                 ImGui::NewLine(); ImGui::SameLine();
                 ImGui::Text("Exit program");
