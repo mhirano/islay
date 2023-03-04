@@ -144,6 +144,10 @@ bool Application::run(){
     std::shared_ptr<Engine> engineSample(new Engine(appMsg));
     std::map<std::string, ImageTexture> texturePool;
     std::map<std::string, ImVec2> textureSizePool;
+    auto clearTexturePool=[&](){
+        texturePool.clear();
+        textureSizePool.clear();
+    };
 
     enum SHOW_IMAGE_MODE {IMGUI = 0, OPENCV = 1};
     static int selectedShowImageMode = SHOW_IMAGE_MODE::IMGUI;
@@ -251,6 +255,10 @@ bool Application::run(){
             {
                 // TODO: make items clickable and the clicked window be active
                 ImGui::Text("Images:");
+                if (ImGui::Button("Delete images")) {
+                    clearTexturePool();
+                    appMsg->ocvImageMsgCollection.clear();
+                }
                 ImGui::NewLine();
                 for (const auto &texture: texturePool) {
                     ImGui::SameLine();
@@ -261,61 +269,64 @@ bool Application::run(){
             ImGui::End();
         }
 
-
-
         /// Destroy OpenCV windows if exists
         if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) { /// Use ImGui
             cv::destroyAllWindows();
         }
 
-        static float imguiImageScale = 1.0f; /// image scale for imgui rendering
-        static int windowMarginX = 0, windowMarginY = 0;
-        DispMsg *md = appMsg->displayMessenger->receive();
-        if (md != nullptr) { // texture pool updated
-            if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI){
-                texturePool.clear();
-                for (auto img_in_pool:md->pool) {
-                    std::string winname = img_in_pool.first;
-                    if (textureSizePool.count(img_in_pool.first) == 0) {
-                        ImGui::SetNextWindowSize(ImVec2(img_in_pool.second.cols, img_in_pool.second.rows));
-                        textureSizePool[winname] = ImVec2(img_in_pool.second.cols, img_in_pool.second.rows);
+        // Display images
+        for(auto& e: appMsg->ocvImageMsgCollection.pool) {
+            auto msg = e.second->receive();
+            if (msg != nullptr) {
+                if (selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) {
+                    std::string winname = e.first;
+                    if(textureSizePool.count(winname)==0){
+                        ImGui::SetNextWindowSize(ImVec2(msg->img.cols, msg->img.rows));
+                        textureSizePool[winname] = ImVec2(msg->img.cols, msg->img.rows);
                     } else {
                         ImGui::SetNextWindowSize(ImVec2(textureSizePool[winname].x, textureSizePool[winname].y));
                     }
-                    ImGui::Begin(winname.c_str(), nullptr );
-                    texturePool[img_in_pool.first].setImage(&img_in_pool.second);
-                    ImGui::Image(texturePool[img_in_pool.first].getOpenglTexture(),
-                                 ImVec2(textureSizePool[img_in_pool.first].x-20, textureSizePool[img_in_pool.first].y-40),
-                                 ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
-                    );
-                    float scale = std::min<float>(ImGui::GetWindowSize().x/textureSizePool[winname].x, ImGui::GetWindowSize().y/textureSizePool[winname].y);
-                    textureSizePool[winname] = ImVec2(textureSizePool[winname].x*scale, textureSizePool[winname].y*scale);
+                    if(ImGui::Begin(winname.c_str())) {
+                        bool isWindowCollapsed = ImGui::IsWindowCollapsed();
+                        texturePool[winname].setImage(&msg->img);
+                        ImGui::Image(texturePool[winname].getOpenglTexture(),
+                                     ImVec2(textureSizePool[winname].x - 20, textureSizePool[winname].y - 40),
+                                     ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
+                        );
+                        if (!isWindowCollapsed) {
+                            float scale = std::min<float>(ImGui::GetWindowSize().x / textureSizePool[winname].x,
+                                                          ImGui::GetWindowSize().y / textureSizePool[winname].y);
+                            textureSizePool[winname] = ImVec2(textureSizePool[winname].x * scale,
+                                                              textureSizePool[winname].y * scale);
+                        }
+                    }
                     ImGui::End();
+                } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV) {
+                    std::string winname = e.first;
+                    cv::namedWindow(winname, cv::WINDOW_NORMAL);
+                    cv::imshow(winname, msg->img);
                 }
-            } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){
-                for (auto& img_in_pool:md->pool) {
-                    std::string winname = img_in_pool.first;
-                    cv::namedWindow(winname,cv::WINDOW_NORMAL);
-                    cv::imshow(winname, img_in_pool.second);
-                }
-                cv::waitKey(1);
-            }
-        } else { // texture pool not updated
-            if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI){
-                for (auto &texture: texturePool) {
-                    std::string winname = texture.first;
+            } else {
+                if (selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) {
+                    std::string winname = e.first;
                     ImGui::SetNextWindowSize(ImVec2(textureSizePool[winname].x, textureSizePool[winname].y));
-                    ImGui::Begin(winname.c_str(), nullptr );
-                    ImGui::Image(texturePool[texture.first].getOpenglTexture(),
-                                 ImVec2(textureSizePool[winname].x - 20, textureSizePool[winname].y - 40),
-                                 ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
-                    );
-                    float scale = std::min<float>(ImGui::GetWindowSize().x/textureSizePool[winname].x, ImGui::GetWindowSize().y/textureSizePool[winname].y);
-                    textureSizePool[texture.first] = ImVec2(textureSizePool[texture.first].x*scale, textureSizePool[texture.first].y*scale);
+                    if (ImGui::Begin(winname.c_str())) {
+                        bool isWindowCollapsed = ImGui::IsWindowCollapsed();
+                        ImGui::Image(texturePool[winname].getOpenglTexture(),
+                                     ImVec2(textureSizePool[winname].x - 20, textureSizePool[winname].y - 40),
+                                     ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
+                        );
+                        if (!isWindowCollapsed) {
+                            float scale = std::min<float>(ImGui::GetWindowSize().x / textureSizePool[winname].x,
+                                                          ImGui::GetWindowSize().y / textureSizePool[winname].y);
+                            textureSizePool[winname] = ImVec2(textureSizePool[winname].x * scale,
+                                                              textureSizePool[winname].y * scale);
+                        }
+                    };
                     ImGui::End();
+                } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV) {
+                    cv::waitKey(1);
                 }
-            } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){
-                cv::waitKey(1);
             }
         }
 
@@ -422,7 +433,6 @@ bool Application::run(){
                 }
             }
             ImGui::End();
-
         }
 
         /// Rendering

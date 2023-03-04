@@ -93,25 +93,26 @@ bool WorkerSampleWithAppMsg::run(const std::shared_ptr<void> data){
             Config::get_instance().readStringParam("IMG_PATH"));
     std::string imgName = Config::get_instance().readStringParam("IMG_NAME");
 
+    /**
+     * Show processed image using AppMsg
+     * - Images show up at the same location by default.
+     * - You can modify ImageTexture::setImage to show a cv::Mat whose format is not currently supported.
+     */
+    auto msgr = appMsg->ocvImageMsgCollection.setup("lena"); // Set up a messenger with a name
+    auto msg = msgr->prepareMsg(); // Prepare a message
+    msg->img = lena; // pass an image you want to show to the message
+    msgr->send(); // Send the messenger
+
     auto elapsedTimeInMs = Util::Bench::bench([&] {
         for (int i = 0; i < 3000; i++) {
             cv::Mat blurred_lena;
             int k = ceil(rand() % 5) * 8 + 1;
             cv::GaussianBlur(lena, blurred_lena, cv::Size(k, k), 10);
 
-            /**
-             * Show processed image using AppMsg
-             * - You can show cv::Mat img by simply adding
-             *     dm->pool["Name of window"] = img;
-             *   between prepareMsg() and send().
-             * - Images show up at the same location by default.
-             * - You can modify ImageTexture::setImage to show a cv::Mat whose format is not currently supported.
-             */
-            DispMsg *dm;
-            dm = appMsg->displayMessenger->prepareMsg();
-            dm->pool[imgName.c_str()] = lena;
-            dm->pool["blurred lena"] = std::move(blurred_lena);
-            appMsg->displayMessenger->send();
+            auto msgr = appMsg->ocvImageMsgCollection.setup("lena_blur"); // make sure to set up each time
+            auto msg = msgr->prepareMsg();
+            msg->img = std::move(blurred_lena);
+            msgr->send();
 
             if (checkIfTerminateRequested()) {
                 break;
