@@ -185,33 +185,40 @@ bool Application::run(){
         {
             const float DISTANCE = 10.0f;
             static float f = 0.0f;
-            ImVec2 window_pos = ImVec2(DISTANCE, 210);
+            ImVec2 window_pos = ImVec2(DISTANCE, 260);
             ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
             ImGui::SetNextWindowPos(window_pos, ImGuiCond_Appearing, window_pos_pivot);
-            ImGui::SetNextWindowSize(ImVec2(300,600), ImGuiCond_Always);
+            ImGui::SetNextWindowSizeConstraints(ImVec2(300, 0), ImVec2(300, 600));
             ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
-            if(ImGui::Begin("Command palette", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+            if(ImGui::Begin("Commands", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
             {
                 ImGui::Text("Workers:");
-                ImGui::NewLine(); ImGui::SameLine();
-                ImGui::Text("WorkerSample");
-                ImGui::NewLine(); ImGui::SameLine();
-                if (ImGui::Button("Launch##WorkerSample")) {
-                    engineSample->runWorkerSample();
+                {
+                    ImGui::NewLine(); ImGui::SameLine();
+                    ImGui::Text("WorkerSample");
+                    ImGui::NewLine(); ImGui::SameLine();
+                    if (ImGui::Button("Launch##WorkerSample")) {
+                        engineSample->runWorkerSample();
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button("Terminate##WorkerSample")) {
+                        engineSample->terminateWorker("WorkerSample");
+                    }
                 }
-                ImGui::SameLine();
-                if (ImGui::Button("Terminate##WorkerSample")) {
-                    engineSample->terminateWorker("WorkerSample");
+                {
+                    ImGui::NewLine(); ImGui::SameLine();
+                    ImGui::Text("WorkerSampleWithAppMsg");
+                    ImGui::NewLine(); ImGui::SameLine();
+                    if (ImGui::Button("Launch##WorkerSampleWithAppMsg")) {
+                        engineSample->runWorkerSampleWithAppMsg();
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button("Terminate##WorkerSampleWithAppMsg")) {
+                        engineSample->terminateWorker("WorkerSampleWithAppMsg");
+                    }
                 }
-                ImGui::NewLine(); ImGui::SameLine();
-                ImGui::Text("WorkerSampleWithAppMsg");
-                ImGui::NewLine(); ImGui::SameLine();
-                if (ImGui::Button("Launch##WorkerSampleWithAppMsg")) {
-                    engineSample->runWorkerSampleWithAppMsg();
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Terminate##WorkerSampleWithAppMsg")) {
-                    engineSample->terminateWorker("WorkerSampleWithAppMsg");
+                {// Add your worker here as above
+
                 }
                 ImGui::NewLine(); ImGui::SameLine();
                 ImGui::Text("Delete workers");
@@ -219,17 +226,15 @@ bool Application::run(){
                 if (ImGui::Button("Delete workers")) {
                     engineSample->deleteAllWorker();
                 }
-                ImGui::NewLine(); ImGui::SameLine();
-                ImGui::Text("Exit program");
-                ImGui::NewLine(); ImGui::SameLine();
-                if (ImGui::Button("Exit")) {
-                    done = true;
-                }
             }
             ImGui::Separator();
             {
-                /// Show status
-                ImGui::Text("Status:");
+                ImGui::Text("Worker Status:");
+                ImVec2 child_size = ImVec2(0, ImGui::GetFontSize() * 5.0f);
+                ImGui::BeginChild("##ScrollingRegion_worker-status", child_size, false, ImGuiWindowFlags_HorizontalScrollbar);
+                int ITEMS_COUNT = engineSample->getWorkerList().size();
+                ImGuiListClipper clipper; // Also demonstrate using the clipper for large list
+                clipper.Begin(ITEMS_COUNT);
                 for (auto &name: engineSample->getWorkerList()) {
                     ImGui::NewLine();
                     WORKER_STATUS observedWorkerStatus;
@@ -249,83 +254,97 @@ bool Application::run(){
                     } else {
                         ImGui::Text("%s: unknown", name.c_str());
                     }
+                    ImGui::NextColumn();
                 }
+                ImGui::EndChild();
             }
             ImGui::Separator();
             {
-                // TODO: make items clickable and the clicked window be active
+                // Image-related commands
                 ImGui::Text("Images:");
+                ImGui::NewLine();
+                ImGui::SameLine();
+                // TODO: make items clickable and the clicked window be active
                 if (ImGui::Button("Delete images")) {
                     clearTexturePool();
                     appMsg->ocvImageMsgCollection.clear();
                 }
                 ImGui::NewLine();
+                ImGui::SameLine();
+                ImVec2 child_size = ImVec2(0, ImGui::GetFontSize() * 5.0f);
+                ImGui::BeginChild("##ScrollingRegion_image", child_size, false, ImGuiWindowFlags_HorizontalScrollbar);
+                int ITEMS_COUNT = texturePool.size();
+                ImGuiListClipper clipper; // Also demonstrate using the clipper for large list
+                clipper.Begin(ITEMS_COUNT);
                 for (const auto &texture: texturePool) {
-                    ImGui::SameLine();
                     ImGui::Text("%s", texture.first.c_str());
-                    ImGui::NewLine();
+                    ImGui::NextColumn();
                 }
+                ImGui::EndChild();
             }
             ImGui::End();
         }
 
-        /// Destroy OpenCV windows if exists
-        if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) { /// Use ImGui
-            cv::destroyAllWindows();
-        }
-
         // Display images
-        for(auto& e: appMsg->ocvImageMsgCollection.pool) {
-            auto msg = e.second->receive();
-            if (msg != nullptr) {
-                if (selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) {
-                    std::string winname = e.first;
-                    if(textureSizePool.count(winname)==0){
-                        ImGui::SetNextWindowSize(ImVec2(msg->img.cols, msg->img.rows));
-                        textureSizePool[winname] = ImVec2(msg->img.cols, msg->img.rows);
-                    } else {
+        {
+            /// Destroy OpenCV windows if exists
+            if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) { /// Use ImGui
+                cv::destroyAllWindows();
+            }
+
+            /// Render images in texturePool
+            for (auto &e: appMsg->ocvImageMsgCollection.pool) {
+                auto msg = e.second->receive();
+                if (msg != nullptr) {
+                    if (selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) {
+                        std::string winname = e.first;
+                        if (textureSizePool.count(winname) == 0) {
+                            ImGui::SetNextWindowSize(ImVec2(msg->img.cols, msg->img.rows));
+                            textureSizePool[winname] = ImVec2(msg->img.cols, msg->img.rows);
+                        } else {
+                            ImGui::SetNextWindowSize(ImVec2(textureSizePool[winname].x, textureSizePool[winname].y));
+                        }
+                        if (ImGui::Begin(winname.c_str())) {
+                            bool isWindowCollapsed = ImGui::IsWindowCollapsed();
+                            texturePool[winname].setImage(&msg->img);
+                            ImGui::Image(texturePool[winname].getOpenglTexture(),
+                                         ImVec2(textureSizePool[winname].x - 20, textureSizePool[winname].y - 40),
+                                         ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
+                            );
+                            if (!isWindowCollapsed) {
+                                float scale = std::min<float>(ImGui::GetWindowSize().x / textureSizePool[winname].x,
+                                                              ImGui::GetWindowSize().y / textureSizePool[winname].y);
+                                textureSizePool[winname] = ImVec2(textureSizePool[winname].x * scale,
+                                                                  textureSizePool[winname].y * scale);
+                            }
+                        }
+                        ImGui::End();
+                    } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV) {
+                        std::string winname = e.first;
+                        cv::namedWindow(winname, cv::WINDOW_NORMAL);
+                        cv::imshow(winname, msg->img);
+                    }
+                } else {
+                    if (selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) {
+                        std::string winname = e.first;
                         ImGui::SetNextWindowSize(ImVec2(textureSizePool[winname].x, textureSizePool[winname].y));
+                        if (ImGui::Begin(winname.c_str())) {
+                            bool isWindowCollapsed = ImGui::IsWindowCollapsed();
+                            ImGui::Image(texturePool[winname].getOpenglTexture(),
+                                         ImVec2(textureSizePool[winname].x - 20, textureSizePool[winname].y - 40),
+                                         ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
+                            );
+                            if (!isWindowCollapsed) {
+                                float scale = std::min<float>(ImGui::GetWindowSize().x / textureSizePool[winname].x,
+                                                              ImGui::GetWindowSize().y / textureSizePool[winname].y);
+                                textureSizePool[winname] = ImVec2(textureSizePool[winname].x * scale,
+                                                                  textureSizePool[winname].y * scale);
+                            }
+                        };
+                        ImGui::End();
+                    } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV) {
+                        cv::waitKey(1);
                     }
-                    if(ImGui::Begin(winname.c_str())) {
-                        bool isWindowCollapsed = ImGui::IsWindowCollapsed();
-                        texturePool[winname].setImage(&msg->img);
-                        ImGui::Image(texturePool[winname].getOpenglTexture(),
-                                     ImVec2(textureSizePool[winname].x - 20, textureSizePool[winname].y - 40),
-                                     ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
-                        );
-                        if (!isWindowCollapsed) {
-                            float scale = std::min<float>(ImGui::GetWindowSize().x / textureSizePool[winname].x,
-                                                          ImGui::GetWindowSize().y / textureSizePool[winname].y);
-                            textureSizePool[winname] = ImVec2(textureSizePool[winname].x * scale,
-                                                              textureSizePool[winname].y * scale);
-                        }
-                    }
-                    ImGui::End();
-                } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV) {
-                    std::string winname = e.first;
-                    cv::namedWindow(winname, cv::WINDOW_NORMAL);
-                    cv::imshow(winname, msg->img);
-                }
-            } else {
-                if (selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) {
-                    std::string winname = e.first;
-                    ImGui::SetNextWindowSize(ImVec2(textureSizePool[winname].x, textureSizePool[winname].y));
-                    if (ImGui::Begin(winname.c_str())) {
-                        bool isWindowCollapsed = ImGui::IsWindowCollapsed();
-                        ImGui::Image(texturePool[winname].getOpenglTexture(),
-                                     ImVec2(textureSizePool[winname].x - 20, textureSizePool[winname].y - 40),
-                                     ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
-                        );
-                        if (!isWindowCollapsed) {
-                            float scale = std::min<float>(ImGui::GetWindowSize().x / textureSizePool[winname].x,
-                                                          ImGui::GetWindowSize().y / textureSizePool[winname].y);
-                            textureSizePool[winname] = ImVec2(textureSizePool[winname].x * scale,
-                                                              textureSizePool[winname].y * scale);
-                        }
-                    };
-                    ImGui::End();
-                } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV) {
-                    cv::waitKey(1);
                 }
             }
         }
@@ -378,7 +397,7 @@ bool Application::run(){
             ImVec2 window_pos = ImVec2(DISTANCE, DISTANCE);
             ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
             ImGui::SetNextWindowPos(window_pos, ImGuiCond_Appearing, window_pos_pivot);
-            ImGui::SetNextWindowSize(ImVec2(300,190), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(300,240), ImGuiCond_Always);
             ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
             if (ImGui::Begin("GUI", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
             {
@@ -431,6 +450,13 @@ bool Application::run(){
                     }
                     ImGui::Unindent();
                 }
+                {
+                    ImGui::Text("Exit program");
+                    ImGui::Indent();
+                    if (ImGui::Button("Exit")) {
+                        done = true;
+                    }
+                }
             }
             ImGui::End();
         }
@@ -479,6 +505,8 @@ bool Application::run(){
 
     engineSample->terminateAll();
     engineSample->reset();
+
+    SPDLOG_INFO("Program terminated successfully. See you!");
 
     return true;
 }
