@@ -2,15 +2,15 @@
 // Created by Hirano Masahiro <masahiro.dll@gmail.com>
 //
 
-#ifndef ISLAY_ENGINESAMPLE_H
-#define ISLAY_ENGINESAMPLE_H
+#ifndef ISLAY_ENGINE_H
+#define ISLAY_ENGINE_H
 
-#include <islay/Engine.h>
+#include <islay/EngineBase.h>
 
-class EngineSample : public EngineBase{
+class Engine : public EngineBase{
 public:
-    EngineSample(AppMsgPtr _appMsg): EngineBase(std::move(_appMsg)){};
-    ~EngineSample(){
+    Engine(AppMsgPtr _appMsg): EngineBase(std::move(_appMsg)){};
+    ~Engine(){
         reset();
     }
     bool run() override;
@@ -24,4 +24,4 @@ public:
 };
 
 
-#endif //ISLAY_ENGINESAMPLE_H
+#endif //ISLAY_ENGINE_H

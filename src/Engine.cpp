@@ -2,28 +2,33 @@
 // Created by Hirano Masahiro <masahiro.dll@gmail.com>
 //
 
-#include "EngineSample.h"
+#include "Engine.h"
 #include "WorkerSample.h"
 
-bool EngineSample::run() {
+bool Engine::run() {
     return true;
 }
 
-bool EngineSample::runWorkerSample() {
+bool Engine::runWorkerSample() {
     /*
      * Register a worker with its name
      */
     registerWorker<WorkerSample>("WorkerSample");
 
     /*
+     * You can pass a variable to the worker as a shared pointer.
+     */
+    std::shared_ptr<int> hoge(new int(123));
+
+    /*
      * Run the worker
      */
-    runWorker("WorkerSample");
+    runWorker("WorkerSample", hoge);
 
     return true;
 }
 
-bool EngineSample::runWorkerSampleWithAppMsg() {
+bool Engine::runWorkerSampleWithAppMsg() {
     /*
      * Register a worker with its name
      */

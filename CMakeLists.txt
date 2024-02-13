@@ -133,7 +133,7 @@ add_executable(${PROJECT_NAME} ${WIN32_FLAG}
         ${IMPLOT_SRC}
         src/main.cpp
         src/Application.cpp
-        src/EngineSample.cpp
+        src/Engine.cpp
         src/WorkerSample.cpp
         )
 set_source_files_properties(imgui/examples/libs/gl3w/GL/gl3w.c PROPERTIES COMPILE_FLAGS -Wno-pedantic)

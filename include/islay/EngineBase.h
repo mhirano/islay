@@ -2,8 +2,8 @@
 // Created by Hirano Masahiro <masahiro.dll@gmail.com>
 //
 
-#ifndef ISLAY_ENGINE_H
-#define ISLAY_ENGINE_H
+#ifndef ISLAY_ENGINEBASE_H
+#define ISLAY_ENGINEBASE_H
 
 #include "AppMsg.h"
 #include "Worker.h"
@@ -39,6 +39,9 @@ public:
     // Register worker
     template <class T>
     bool registerWorker(std::string name){
+        if(isWorkerExist(name)){
+            return true;
+        }
         auto [t,b] = workers.try_emplace(name, std::move(WorkerManager<T>(name)));
         return b;
     };
@@ -81,6 +84,34 @@ public:
         return std::move(names);
     }
 
+
+    /// TODO: check if this works
+    // Delete worker if idle
+    bool deleteWorker(std::string name){
+        // check if there exists worker named 'name'
+        if(!isWorkerExist(name)){
+            SPDLOG_WARN("Worker not found: {}", name);
+            return false;
+        }
+
+        // Delete worker if idle
+        if( getWorkerStatus(name) == WORKER_STATUS::IDLE) {
+            workers.erase(workers.find(name));
+            SPDLOG_INFO("Worker deleted: {}", name);
+        }
+
+        return true;
+    }
+
+    // Delete all workers in idle
+    bool deleteAllWorker(){
+        auto workerNames = getWorkerList();
+        for (auto& workerName: workerNames) {
+            deleteWorker(workerName);
+        }
+        return true;
+    }
+
 };
 
-#endif //ISLAY_ENGINE_H
+#endif //ISLAY_ENGINEBASE_H
