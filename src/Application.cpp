@@ -119,7 +119,8 @@ bool Application::run(){
 //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 //IM_ASSERT(font != NULL);
 #ifdef _MSC_VER
-	ImFont* font = io.Fonts->AddFontFromFileTTF("../../font/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+	ImFont* font = io.Fonts->AddFontFromFileTTF("../font/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+//    ImFont* font = io.Fonts->AddFontFromFileTTF("../../font/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     IM_ASSERT(font != NULL);
 #else
 	ImFont* font = io.Fonts->AddFontFromFileTTF("../font/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
@@ -232,9 +233,9 @@ bool Application::run(){
                 ImGui::Text("Worker Status:");
                 ImVec2 child_size = ImVec2(0, ImGui::GetFontSize() * 5.0f);
                 ImGui::BeginChild("##ScrollingRegion_worker-status", child_size, false, ImGuiWindowFlags_HorizontalScrollbar);
-                int ITEMS_COUNT = engineSample->getWorkerList().size();
+//                int ITEMS_COUNT = engineSample->getWorkerList().size();
                 ImGuiListClipper clipper; // Also demonstrate using the clipper for large list
-                clipper.Begin(ITEMS_COUNT);
+//                clipper.Begin(ITEMS_COUNT);
                 for (auto &name: engineSample->getWorkerList()) {
                     ImGui::NewLine();
                     WORKER_STATUS observedWorkerStatus;
@@ -273,9 +274,9 @@ bool Application::run(){
                 ImGui::SameLine();
                 ImVec2 child_size = ImVec2(0, ImGui::GetFontSize() * 5.0f);
                 ImGui::BeginChild("##ScrollingRegion_image", child_size, false, ImGuiWindowFlags_HorizontalScrollbar);
-                int ITEMS_COUNT = texturePool.size();
+//                int ITEMS_COUNT = texturePool.size();
                 ImGuiListClipper clipper; // Also demonstrate using the clipper for large list
-                clipper.Begin(ITEMS_COUNT);
+//                clipper.Begin(ITEMS_COUNT);
                 for (const auto &texture: texturePool) {
                     ImGui::Text("%s", texture.first.c_str());
                     ImGui::NextColumn();

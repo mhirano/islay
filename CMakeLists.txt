@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.22)
 
 project(islay)
 
@@ -43,10 +43,9 @@ find_package(Threads REQUIRED)
 set(ISLAY_LIBS "${ISLAY_LIBS};Threads::Threads")
 
 # OpenCV
-find_package(OpenCV REQUIRED HINTS ${OpenCV_DIR})
+find_package(OpenCV 4.5.5 REQUIRED HINTS ${OpenCV_DIR})
 include_directories(${PROJECT_NAME} ${OpenCV_INCLUDE_DIRS} )
 set(OpenCV_DIR "" CACHE PATH "OpenCV install path")
-set(ISLAY_LIBS "${ISLAY_LIBS};${OpenCV_LIBRARIES}")
 
 # Eigen
 find_package(Eigen3 REQUIRED)
@@ -59,17 +58,24 @@ include_directories(3rdparty/rapidjson/include)
 include_directories(3rdparty/spdlog/include)
 
 # Rendering
+if (UNIX) # UNIX AND APPLE
 find_package(SDL2 REQUIRED)
+include_directories(${SDL2_INCLUDE_DIRS})
 find_package(GLFW REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glm REQUIRED)
+elseif(WIN32) # vcpkg
+find_package(SDL2 REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(glm REQUIRED)
+endif()
 
 # ImGui
 include_directories(
   3rdparty/imgui
   3rdparty/imgui/examples
   3rdparty/imgui/examples/libs/gl3w
-  ${SDL2_INCLUDE_DIRS}
 )
 
 # implot for Dear ImGui
@@ -83,49 +89,52 @@ set(IMPLOT_SRC
 ######## ######## ######## ######## ######## ######## ######## ########
 # Compiler settings
 ######## ######## ######## ######## ######## ######## ######## ########
-# Check C++14 support and activate
+# Check C++17 support and activate
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
-if(COMPILER_SUPPORTS_CXX17)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
-  set(CMAKE_CXX_STANDARD 17) # C++14...
-  set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
-  set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
-  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has C++17 support.")
-else()
-  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support. Please use a different C++ compiler.")
+if(UNIX)
+  CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+  if(COMPILER_SUPPORTS_CXX17)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+    set(CMAKE_CXX_STANDARD 17) # C++14...
+    set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
+    set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
+    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has C++17 support.")
+  else()
+    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support. Please use a different C++ compiler.")
+  endif()
+elseif(MSVC) # Use Visual Studio as a compiler which comes with C++17!
+  CHECK_CXX_COMPILER_FLAG("/std:c++17" COMPILER_SUPPORTS_CXX17)
+  if (COMPILER_SUPPORTS_CXX17)
+    add_compile_options("/std:c++17")
+    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has C++17 support.")
+  else()
+    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support. Please use a different C++ compiler.")
+  endif()
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG -g ")
+set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG")
 message(STATUS "${CMAKE_CXX_FLAGS_DEBUG}")
 set(CMAKE_CXX_FLAGS_RELEASE "-DRELEASE -O3 -DNDEBUG -march=native")
 message(STATUS "${CMAKE_CXX_FLAGS_RELEASE}")
 ######## ######## ######## ######## ######## ######## ######## ########
 
-
-add_library(imgui SHARED
-  3rdparty/imgui/imgui.cpp
-  3rdparty/imgui/imgui_demo.cpp
-  3rdparty/imgui/imgui_draw.cpp
-  3rdparty/imgui/imgui_widgets.cpp
-  3rdparty/imgui/examples/imgui_impl_sdl.cpp
-  3rdparty/imgui/examples/imgui_impl_opengl3.cpp
-  3rdparty/imgui/examples/libs/gl3w/GL/gl3w.c
-  ${IMPLOT_SRC}
-)
-set_source_files_properties(imgui/examples/libs/gl3w/GL/gl3w.c PROPERTIES COMPILE_FLAGS -Wno-pedantic)
-
-if(UNIX AND NOT APPLE)
-  target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GLEW::GLEW GL dl )
-else(APPLE)
-  target_link_libraries(imgui ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GLEW::GLEW dl)
+if(MSVC)
+  set(WIN32_FLAG WIN32)
 endif()
-set(ISLAY_LIBS "${ISLAY_LIBS};imgui")
 
-add_executable(${PROJECT_NAME}
+add_executable(${PROJECT_NAME} ${WIN32_FLAG}
+        3rdparty/imgui/imgui.cpp
+        3rdparty/imgui/imgui_demo.cpp
+        3rdparty/imgui/imgui_draw.cpp
+        3rdparty/imgui/imgui_widgets.cpp
+        3rdparty/imgui/examples/imgui_impl_sdl.cpp
+        3rdparty/imgui/examples/imgui_impl_opengl3.cpp
+        3rdparty/imgui/examples/libs/gl3w/GL/gl3w.c
+        ${IMPLOT_SRC}
         src/main.cpp
         src/Application.cpp
         src/Engine.cpp
         src/WorkerSample.cpp
         )
-target_link_libraries(${PROJECT_NAME} ${ISLAY_LIBS})
+set_source_files_properties(imgui/examples/libs/gl3w/GL/gl3w.c PROPERTIES COMPILE_FLAGS -Wno-pedantic)
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} SDL2::SDL2 glfw GLEW::GLEW glm::glm)

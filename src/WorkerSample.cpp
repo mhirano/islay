@@ -46,8 +46,8 @@ bool WorkerSample::run(const std::shared_ptr<void> data) {
          * Save blurred lena in the result directory
          *  - Result files for each execution are stored at a result directory under `result` directory.
          */
-        cv::imwrite(Config::get_instance().resultDirectory() + "/result_" + std::to_string(i) + ".png", blurred_lena,
-                    {cv::IMWRITE_PNG_COMPRESSION});
+        cv::imwrite(Config::get_instance().resultDirectory() + "/result_" + std::to_string(i) + ".png", blurred_lena );
+//        cv::imwrite(Config::get_instance().resultDirectory() + "/result_" + std::to_string(i) + ".png", blurred_lena, {cv::IMWRITE_PNG_COMPRESSION});
 
         /*
          * Be careful in drawing images
