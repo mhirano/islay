@@ -7,7 +7,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <map>
-#include "InterThreadMessenger.hpp"
+#include "islay/InterThreadMessenger.hpp"
 
 struct OcvImageMsg : public MsgData {
     cv::Mat img;

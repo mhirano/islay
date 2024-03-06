@@ -6,7 +6,7 @@
 
 #include <islay/imgui_apps.h>
 #include <islay/ImageTexture.h>
-#include <islay/AppMsg.h>
+#include "AppMsg.h"
 #include <islay/Config.h>
 #include <islay/Logger.h>
 #include <islay/Utility.h>
