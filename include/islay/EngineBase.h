@@ -12,9 +12,12 @@ class EngineBase {
 protected:
     std::map<std::string, WorkerManager<WorkerBase>> workers;
     AppMsgPtr appMsg;
+    std::shared_ptr<PUManager> puManager;
+
 public:
-    EngineBase (AppMsgPtr _appMsg): appMsg(std::move(_appMsg)){
-    };
+    EngineBase (AppMsgPtr _appMsg):
+        appMsg(std::move(_appMsg)),puManager(std::make_shared<PUManager>())
+    {};
 
     virtual ~EngineBase(){
         workers.clear();
@@ -25,7 +28,7 @@ public:
 
     bool terminateWorker(const std::string name) {
         if (!isWorkerExist(name)) {
-            SPDLOG_DEBUG("Worker not exist:{}", name);
+            SPDLOG_WARN("Worker not found: {}", name);
             return false;
         }
         return workers.at(name).terminate();
@@ -36,43 +39,50 @@ public:
         return true;
     }
 
-    // Register worker
     template <class T>
     bool registerWorker(std::string name){
         if(isWorkerExist(name)){
+            SPDLOG_WARN("Worker already exists.");
             return true;
         }
-        auto [t,b] = workers.try_emplace(name, std::move(WorkerManager<T>(name)));
-        return b;
-    };
-
-    template <class T>
-    bool registerWorkerWithAppMsg(std::string name){
-        if(isWorkerExist(name)){
-            return true;
-        }
-        auto [t, b] = workers.try_emplace(name, std::move(WorkerManager<T>(name, appMsg)));
+        auto [t, b] = workers.try_emplace(name, std::move(WorkerManager<T>(name, puManager, appMsg)));
         return b;
     };
 
     bool isWorkerExist(const std::string name){
-        if(workers.count(name) == 0){
-            return false;
-        } else {
-            return true;
-        }
+        return workers.count(name) != 0;
     }
 
     bool runWorker(std::string name, std::shared_ptr<void> data = nullptr) {
+        if(!isWorkerExist(name)){
+            SPDLOG_WARN("Worker not found: {}", name);
+            return false;
+        }
         return workers.at(name).runWorker(data);
     }
 
+    bool runWorkerWithCpuBinding(std::string name, std::shared_ptr<void> data = nullptr) {
+        if(!isWorkerExist(name)){
+            SPDLOG_WARN("Worker not found: {}", name);
+            return false;
+        }
+        return workers.at(name).runWorkerCpuBinded(data);
+    }
+
     bool resetWorker(std::string name) {
+        if(!isWorkerExist(name)){
+            SPDLOG_WARN("Worker not found: {}", name);
+            return false;
+        }
         workers.at(name).status.store(WORKER_STATUS::IDLE);
         return workers.at(name).reset();
     }
 
     WORKER_STATUS getWorkerStatus(std::string name){
+        if(!isWorkerExist(name)){
+            SPDLOG_WARN("Worker not found: {}", name);
+            return WORKER_STATUS::NOT_EXIST;
+        }
         return workers.at(name).getStatus();
     }
 
@@ -83,7 +93,6 @@ public:
         }
         return std::move(names);
     }
-
 
     /// TODO: check if this works
     // Delete worker if idle

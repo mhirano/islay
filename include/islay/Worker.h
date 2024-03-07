@@ -19,7 +19,7 @@
 #include "AppMsg.h"
 #include "Logger.h"
 #include "Config.h"
-
+#include "PUBinder.h"
 
 /**
  * @brief Status list of worker
@@ -29,7 +29,7 @@
  *   JOINABLE: The worker is waiting its thread to be joined
  *
  */
-enum class WORKER_STATUS {IDLE = 0, RUNNING = 1, TERMINATE_REQUESTED = 2, JOINABLE = 3};
+enum class WORKER_STATUS {NOT_EXIST = 0, IDLE = 1, RUNNING = 2, TERMINATE_REQUESTED = 3, JOINABLE = 4};
 
 struct WorkerStatusMessenger : public MsgData {
     WORKER_STATUS workerStatus = WORKER_STATUS::IDLE;
@@ -82,7 +82,7 @@ public:
  *   Users should use this manager to control workers.
  *   To register a worker:
  *       [with application messenger]
- *         registerWorkerWithAppMsg<WorkerSampleWithAppMsg>("WorkerSampleWithAppMsg");
+ *         registerWorker<WorkerSample>("WorkerSample");
  *       [without application messenger]
  *         registerWorker<WorkerSample>("WorkerSample");
  *   To run and reset a worker:
@@ -103,6 +103,7 @@ public:
     std::string workerName;
     std::atomic<WORKER_STATUS> status;
     std::shared_ptr<WorkerBase> t;
+    std::weak_ptr<PUManager> puManager;
 
     /**
      * @brief Constructor of WorkerManager
@@ -112,9 +113,10 @@ public:
      * @param _appMsg Application Messenger. Primary used for inter-thread communication.
      *
      */
-    explicit WorkerManager(std::string _workerName)
+    explicit WorkerManager(std::string _workerName, std::weak_ptr<PUManager> _puManager)
             :workerName(std::move(_workerName)),
              status(WORKER_STATUS::IDLE),
+             puManager(std::move(_puManager)),
              t(std::move(std::make_shared<T>()))
     {
 //        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName)");
@@ -122,9 +124,10 @@ public:
 //        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
     }
 
-    explicit WorkerManager(std::string _workerName, AppMsgPtr _appMsg)
+    explicit WorkerManager(std::string _workerName, std::weak_ptr<PUManager> _puManager,AppMsgPtr _appMsg)
             : workerName(std::move(_workerName)),
               status(WORKER_STATUS::IDLE),
+              puManager(std::move(_puManager)),
               t(std::move(std::make_shared<T>(_appMsg))) {
 //        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName, AppMsgPtr _appMsg)");
 //        std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
@@ -143,6 +146,7 @@ public:
         thisThread = std::move(mg.thisThread);
         status.store(mg.status.load());
         t = std::move(mg.t);
+        puManager = std::move(mg.puManager);
     }
 
     ~WorkerManager(){
@@ -186,7 +190,31 @@ public:
      */
     bool runWorker(std::shared_ptr<void> data = nullptr){
         if (status.load() == WORKER_STATUS::IDLE) {
+            thisThread = std::thread ([this, data] {
+                SPDLOG_INFO("Worker launched: {}", workerName);
+                status.store(WORKER_STATUS::RUNNING);
+                t->run(data);
+                status.store(WORKER_STATUS::JOINABLE);
+                SPDLOG_INFO("Worker completed: {}", workerName);
+            });
+        } else {
+            SPDLOG_INFO("{} is already running", workerName);
+        }
+        return true;
+    }
+
+    bool runWorkerCpuBinded(std::shared_ptr<void> data = nullptr){
+        if (status.load() == WORKER_STATUS::IDLE) {
             thisThread = std::thread([this, data] {
+                unsigned int logical_id = puManager.lock()->bindThread(
+                        workerName, thisThread.native_handle(), thisThread.get_id());
+                if(logical_id != -1){
+                    SPDLOG_DEBUG("{} binded to PU #{} (thread id:{})",
+                                workerName, logical_id, id_to_uint(thisThread.get_id())
+                    );
+                } else {
+                    SPDLOG_WARN("Failed to bind the thread to a PU. No vacant PUs.");
+                }
                 SPDLOG_INFO("Worker launched: {}", workerName);
                 status.store(WORKER_STATUS::RUNNING);
                 t->run(data);
@@ -199,6 +227,4 @@ public:
         return true;
     }
 };
-
-
 #endif //ISLAY_WORKER_H

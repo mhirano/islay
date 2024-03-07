@@ -7,23 +7,23 @@
 
 #include <islay/Worker.h>
 
-/**
- * @brief Sample class of worker without application messenger
+/** \brief Sample class of worker with application messenger
+ *
  */
 class WorkerSample : public WorkerBase {
 public:
-    explicit WorkerSample(): WorkerBase(){};
+    explicit WorkerSample (AppMsgPtr appMsg): WorkerBase(appMsg){};
     bool run(const std::shared_ptr<void> data);
 };
 
-/**
- * @brief Sample class of worker with application messenger
+/** A\brief Sample class of worker with cpu binding
+ *
  */
-class WorkerSampleWithAppMsg : public WorkerBase {
+class WorkerSampleWithCpuBinding : public WorkerBase {
 public:
-    explicit WorkerSampleWithAppMsg (AppMsgPtr appMsg): WorkerBase(appMsg){};
+    explicit WorkerSampleWithCpuBinding (AppMsgPtr appMsg): WorkerBase(appMsg){};
     bool run(const std::shared_ptr<void> data);
-};
 
+};
 
 #endif //ISLAY_WORKERSAMPLE_H

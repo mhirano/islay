@@ -10,17 +10,17 @@ bool Engine::run() {
 }
 
 bool Engine::runWorkerSample() {
-    /*
+    /**
      * Register a worker with its name
      */
     registerWorker<WorkerSample>("WorkerSample");
 
-    /*
+    /**
      * You can pass a variable to the worker as a shared pointer.
      */
     std::shared_ptr<int> hoge(new int(123));
 
-    /*
+    /**
      * Run the worker
      */
     runWorker("WorkerSample", hoge);
@@ -28,21 +28,30 @@ bool Engine::runWorkerSample() {
     return true;
 }
 
-bool Engine::runWorkerSampleWithAppMsg() {
-    /*
+bool Engine::runWorkerSampleWithCpuBinding() {
+    /**
      * Register a worker with its name
      */
-    registerWorkerWithAppMsg<WorkerSampleWithAppMsg>("WorkerSampleWithAppMsg");
+    registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding");
 
-    /*
+    /**
      * You can pass a variable to the worker as a shared pointer.
      */
     std::shared_ptr<int> hoge(new int(123));
 
-    /*
-     * Run the worker
+    /**
+     * Run the worker with cpu binding
      */
-    runWorker("WorkerSampleWithAppMsg", hoge);
+    runWorkerWithCpuBinding("WorkerSampleWithCpuBinding", hoge);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds (200));
+    registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding2");
+    runWorkerWithCpuBinding("WorkerSampleWithCpuBinding2");
+
+    std::this_thread::sleep_for(std::chrono::milliseconds (200));
+    registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding3");
+    runWorkerWithCpuBinding("WorkerSampleWithCpuBinding3");
 
     return true;
+
 }

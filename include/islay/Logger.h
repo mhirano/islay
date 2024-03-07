@@ -7,10 +7,10 @@
 
 #include <iostream>
 
-#ifdef DEBUG
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE // SPDLOG_LEVEL_TRACE
-#else
+#ifdef NDEBUG
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO // All DEBUG/TRACE statements will be removed by the pre-processor
+#else
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE // SPDLOG_LEVEL_TRACE
 #endif
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h> // support for basic file logging

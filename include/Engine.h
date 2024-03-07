@@ -20,7 +20,7 @@ public:
     };
 
     bool runWorkerSample();
-    bool runWorkerSampleWithAppMsg();
+    bool runWorkerSampleWithCpuBinding();
 };
 
 

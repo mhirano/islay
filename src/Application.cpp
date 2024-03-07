@@ -137,7 +137,7 @@ bool Application::run(){
     Logger::get_instance().setExportDirectory(Config::get_instance().resultDirectory());
 
     AppMsgPtr appMsg = std::make_shared<AppMsg>();
-    std::shared_ptr<Engine> engineSample(new Engine(appMsg));
+    std::shared_ptr<Engine> engine(new Engine(appMsg));
     std::map<std::string, ImageTexture> texturePool;
     std::map<std::string, ImVec2> textureSizePool;
     auto clearTexturePool=[&](){
@@ -211,7 +211,7 @@ bool Application::run(){
                             SPDLOG_INFO("Video recording start: {}", windowRecordingFileName);
                             writer = cv::VideoWriter(
                                     Config::get_instance().resultDirectory() + "/" + windowRecordingFileName,
-                                    cv::VideoWriter::fourcc('m', 'p', '4', 'v'), fps_encode,
+                                    cv::VideoWriter::fourcc('x', '2', '6', '4'), fps_encode,
                                     cv::Size((int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x,
                                              (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y));
                             windowRecordingStatus = WINDOW_RECORDING_STATUS::REQUESTED;
@@ -269,23 +269,23 @@ bool Application::run(){
                     ImGui::Text("WorkerSample");
                     ImGui::NewLine(); ImGui::SameLine();
                     if (ImGui::Button("Launch##WorkerSample")) {
-                        engineSample->runWorkerSample();
+                        engine->runWorkerSample();
                     }
                     ImGui::SameLine();
                     if (ImGui::Button("Terminate##WorkerSample")) {
-                        engineSample->terminateWorker("WorkerSample");
+                        engine->terminateWorker("WorkerSample");
                     }
                 }
                 {
                     ImGui::NewLine(); ImGui::SameLine();
-                    ImGui::Text("WorkerSampleWithAppMsg");
+                    ImGui::Text("WorkerSample with CPU binding");
                     ImGui::NewLine(); ImGui::SameLine();
-                    if (ImGui::Button("Launch##WorkerSampleWithAppMsg")) {
-                        engineSample->runWorkerSampleWithAppMsg();
+                    if (ImGui::Button("Launch##WorkerSampleWithCpuBinding")) {
+                        engine->runWorkerSampleWithCpuBinding();
                     }
                     ImGui::SameLine();
-                    if (ImGui::Button("Terminate##WorkerSampleWithAppMsg")) {
-                        engineSample->terminateWorker("WorkerSampleWithAppMsg");
+                    if (ImGui::Button("Terminate##WorkerSampleWithCpuBinding")) {
+                        engine->terminateWorker("WorkerSampleWithCpuBinding");
                     }
                 }
                 {// Add your worker here as above
@@ -295,19 +295,19 @@ bool Application::run(){
                 ImGui::Text("Delete workers");
                 ImGui::NewLine(); ImGui::SameLine();
                 if (ImGui::Button("Delete workers")) {
-                    engineSample->deleteAllWorker();
+                    engine->deleteAllWorker();
                 }
                 ImGui::Separator();
                 {
                     ImGui::Text("Worker Status:");
                     ImVec2 child_size = ImVec2(0, ImGui::GetFontSize() * 5.0f);
                     ImGui::BeginChild("##ScrollingRegion_worker-status", child_size, false, ImGuiWindowFlags_HorizontalScrollbar);
-                    for (auto &name: engineSample->getWorkerList()) {
+                    for (auto &name: engine->getWorkerList()) {
                         ImGui::NewLine();
                         WORKER_STATUS observedWorkerStatus;
-                        observedWorkerStatus = engineSample->getWorkerStatus(name);
+                        observedWorkerStatus = engine->getWorkerStatus(name);
                         if (observedWorkerStatus == WORKER_STATUS::JOINABLE) {
-                            engineSample->resetWorker(name);
+                            engine->resetWorker(name);
                         }
                         ImGui::SameLine();
                         if (observedWorkerStatus == WORKER_STATUS::IDLE) {
@@ -484,7 +484,7 @@ bool Application::run(){
 			ImVec2 window_pos = ImVec2(window_size.x/2, DISTANCE*2+configHeight);
 			ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
 			ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
-			ImGui::SetNextWindowSize(ImVec2(window_size.x/2-DISTANCE,window_size.y-2*DISTANCE), ImGuiCond_Once);
+			ImGui::SetNextWindowSize(ImVec2(window_size.x/2-DISTANCE,window_size.y-3*DISTANCE-configHeight), ImGuiCond_Once);
 			ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
             my_log.Draw("Log");
         }
@@ -531,8 +531,8 @@ bool Application::run(){
         SDL_GL_SwapWindow(window);
     }
 
-    engineSample->terminateAll(); // Request all workers to terminate
-    engineSample->reset(); // Join all threads of workers
+    engine->terminateAll(); // Request all workers to terminate
+    engine->reset(); // Join all threads of workers
 
     SPDLOG_INFO("Program terminated successfully. See you!");
 
