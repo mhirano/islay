@@ -10,9 +10,13 @@
 /** \brief Sample class of worker with application messenger
  *
  */
+
+class WorkerManager;
+
 class WorkerSample : public WorkerBase {
 public:
-    explicit WorkerSample (AppMsgPtr appMsg): WorkerBase(appMsg){};
+    explicit WorkerSample (std::weak_ptr<WorkerManager> wm, AppMsgPtr appMsg):
+        WorkerBase(wm,appMsg){};
     bool run(const std::shared_ptr<void> data);
 };
 
@@ -21,9 +25,9 @@ public:
  */
 class WorkerSampleWithCpuBinding : public WorkerBase {
 public:
-    explicit WorkerSampleWithCpuBinding (AppMsgPtr appMsg): WorkerBase(appMsg){};
+    explicit WorkerSampleWithCpuBinding (std::weak_ptr<WorkerManager> wm, AppMsgPtr appMsg):
+        WorkerBase(wm, appMsg){};
     bool run(const std::shared_ptr<void> data);
-
 };
 
 #endif //ISLAY_WORKERSAMPLE_H

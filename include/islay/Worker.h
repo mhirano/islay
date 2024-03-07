@@ -9,6 +9,7 @@
 #include <thread>
 #include <atomic>
 #include <iostream>
+#include <memory>
 
 #include <typeinfo>
 
@@ -40,18 +41,17 @@ struct WorkerStatusMessenger : public MsgData {
  *   All workers implemented by user should publicly inherit this class.
  *   See WorkerSample.h.
  */
-template<class T>
 class WorkerManager;
 
 class WorkerBase {
 protected:
     AppMsgPtr appMsg;
     InterThreadMessenger<WorkerStatusMessenger> *workerStatusMessenger;
-    std::unique_ptr<WorkerManager<WorkerBase>> wm;
+    std::weak_ptr<WorkerManager> wm;
 
 public:
-    explicit WorkerBase(AppMsgPtr _appMsg):
-            appMsg(_appMsg), workerStatusMessenger(new InterThreadMessenger<WorkerStatusMessenger>) {};
+    explicit WorkerBase(std::weak_ptr<WorkerManager> _wm, AppMsgPtr _appMsg):
+            wm(std::move(_wm)), appMsg(std::move(_appMsg)), workerStatusMessenger(new InterThreadMessenger<WorkerStatusMessenger>) {};
     virtual ~WorkerBase(){
         delete workerStatusMessenger;
     };
@@ -98,8 +98,7 @@ public:
  *
  *   See EngineOffline::runTest().
  */
-template <class T=WorkerBase>
-class WorkerManager{
+class WorkerManager: public std::enable_shared_from_this<WorkerManager>{
 public:
     std::thread thisThread;
     std::string workerName;
@@ -107,6 +106,7 @@ public:
     std::shared_ptr<WorkerBase> t;
     std::weak_ptr<PUBinder> puManager;
 
+private:
     /**
      * @brief Constructor of WorkerManager
      * User may want to override this function to specify how to terminate the workersers
@@ -115,25 +115,26 @@ public:
      * @param _appMsg Application Messenger. Primary used for inter-thread communication.
      *
      */
-    explicit WorkerManager(std::string _workerName, std::weak_ptr<PUBinder> _puManager)
-            :workerName(std::move(_workerName)),
-             status(WORKER_STATUS::IDLE),
-             puManager(std::move(_puManager)),
-             t(std::move(std::make_shared<T>()))
-    {
-//        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName)");
-//        std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
-//        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
+    explicit WorkerManager() { };
+
+    template<class T>
+    void init( std::string _workerName, std::weak_ptr<PUBinder> _puManager, AppMsgPtr _appMsg ){
+        workerName = std::move(_workerName);
+        status = WORKER_STATUS::IDLE;
+        puManager = std::move(_puManager);
+        t = std::make_shared<T>(this->shared_from_this(), _appMsg);
     }
 
-    explicit WorkerManager(std::string _workerName, std::weak_ptr<PUBinder> _puManager, AppMsgPtr _appMsg)
-            : workerName(std::move(_workerName)),
-              status(WORKER_STATUS::IDLE),
-              puManager(std::move(_puManager)),
-              t(std::move(std::make_shared<T>(_appMsg))) {
-//        SPDLOG_DEBUG("Construct WorkerManager(std::string&& _workerName, AppMsgPtr _appMsg)");
-//        std::string demangledClassName = abi::__cxa_demangle(typeid(T).name(), 0, 0, nullptr);
-//        SPDLOG_DEBUG("Demangled worker class name of constructed WorkerManager: {}", demangledClassName);
+public:
+    template <class T>
+    static std::shared_ptr<WorkerManager> createWorkerManager(
+            std::string _workerName, std::weak_ptr<PUBinder> _puManager, AppMsgPtr _appMsg
+    ) {
+        struct OBJ: WorkerManager{};
+        auto sp = std::make_shared<OBJ>();
+//        auto sp = std::make_shared<WorkerManager>(); // private constructor can not be accessed.
+        sp->template init<T>(_workerName,_puManager,_appMsg);
+        return sp;
     }
 
     /**
@@ -141,8 +142,7 @@ public:
      * @tparam U Worker class name to be moved
      * @param mg moved instance of WorkerManager
      */
-    template <class U>
-    explicit WorkerManager(WorkerManager<U>&& mg){
+    explicit WorkerManager(WorkerManager&& mg){
 //        SPDLOG_DEBUG("Move constructor of WorkerManager launched");
         workerName = std::move(mg.workerName);
         thisThread = std::move(mg.thisThread);
@@ -178,14 +178,11 @@ public:
      * @return true if the worker is successfully reset
      */
     bool reset(){
-        if (!thisThread.joinable()){
-            return false;
-        }
+        if (!thisThread.joinable()){ return false; }
         thisThread.join();
         // Unregister the binding
-        int puInd = puManager.lock()->getPuIfBinded(workerName);
-        if(puInd == -1) SPDLOG_ERROR("Unbind failed. Worker was not binded to a PU.");
-//        SPDLOG_DEBUG("Worker unbinded: {} from PU {}", workerName, puManager->)
+        if(puManager.lock()->unbind(workerName))
+            SPDLOG_DEBUG("Worker unbinded: {}", workerName);
         SPDLOG_DEBUG("***********************RESET {}**********************", workerName);
         return true;
     };

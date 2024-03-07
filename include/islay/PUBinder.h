@@ -12,10 +12,9 @@
 #include <windows.h>
 #else
 #endif
-
-class WorkerBase;
-template<typename T>
-class WorkerManager;
+//
+//class WorkerBase;
+//class WorkerManager;
 
 inline unsigned int id_to_uint(std::thread::id id){
     std::ostringstream os;
@@ -69,21 +68,6 @@ public:
         assert(pu->logical_index == firstUnbindedPuLogicalInd && "PU and thread was not binded correctly.");
         puMap[pu->logical_index] = workerName;
         return firstUnbindedPuLogicalInd;
-
-//
-//        const auto firstUnbindedPu = std::find(puMap.begin(), puMap.end(), "");
-//        if(firstUnbindedPuLogicalInd == puList.end()){
-//            return -1;
-//        } else {
-//            // Get the index of the vacant PU
-//            const unsigned int ind = std::distance(puList.begin(), firstUnbindedPuLogicalInd);
-//            // Get the vacant pu object
-//            hwloc_obj_t pu = hwloc_get_obj_by_type(topology, hwloc_obj_type_t::HWLOC_OBJ_PU, ind);
-//            // Bind the thread (identified by handle) with the vacant PU
-//            hwloc_set_thread_cpubind(topology, thread, pu->cpuset, HWLOC_CPUBIND_THREAD);
-//            puList[pu->logical_index] = workerName;
-//            return ind;
-//        }
     }
 
     bool unbind(std::string workerName){
@@ -94,10 +78,6 @@ public:
             }
         }
         return false;
-    }
-
-    std::map<unsigned int,std::string> getPuMap(){
-        return puMap ;
     }
 
     int getPuIfBinded(std::string workerName){

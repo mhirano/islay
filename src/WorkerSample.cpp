@@ -1,7 +1,6 @@
-//
+﻿//
 // Created by Hirano Masahiro <masahiro.dll@gmail.com>
 //
-
 #include "WorkerSample.h"
 
 #include <opencv2/opencv.hpp>
@@ -84,8 +83,6 @@ bool WorkerSample::run(const std::shared_ptr<void> data){
 
 bool WorkerSampleWithCpuBinding::run(const std::shared_ptr<void> data) {
 
-// @brief 現在利用されている論理プロセッサ番号,物理プロセッサ番号を表示する
-// @param[in] t トポロジーコンテキスト
     auto PrintUsingProccessor = [](hwloc_topology_t t) {
         {
             constexpr int N = 30;
@@ -106,29 +103,10 @@ bool WorkerSampleWithCpuBinding::run(const std::shared_ptr<void> data) {
         }
     };
 
-// @brief 指定されたプロセッサ番号にスレッドを固定する
-// @param[in] t               トポロジーコンテキスト
-// @param[in] processorNumber プロセッサ番号
-    auto BindProcessor = [](hwloc_topology_t t, int processorNumber)
-    {
-        const int depthTop = hwloc_topology_get_depth(t);
-        const hwloc_obj_t pu =
-                hwloc_get_obj_by_depth(t, depthTop - 1, processorNumber);
-        SPDLOG_INFO("pu type: {}", pu->type);
-        if(pu->type == hwloc_obj_type_t::HWLOC_OBJ_PU) SPDLOG_INFO("This is PU");
-        hwloc_set_cpubind(t, pu->cpuset, HWLOC_CPUBIND_THREAD);
-    };
-
-    constexpr int processorNumber = 0;
     hwloc_topology_t t;
     hwloc_topology_init(&t);
     hwloc_topology_load(t);
-    SPDLOG_INFO("# Default");
     PrintUsingProccessor(t);
-//    BindProcessor(t,processorNumber);
-//    SPDLOG_INFO("# Bind");
-//    PrintUsingProccessor(t);
-//    hwloc_topology_destroy(t);
 
     return true;
 }

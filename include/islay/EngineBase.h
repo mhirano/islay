@@ -10,7 +10,7 @@
 
 class EngineBase {
 protected:
-    std::map<std::string, WorkerManager<WorkerBase>> workers;
+    std::map<std::string, std::shared_ptr<WorkerManager>> workers;
     AppMsgPtr appMsg;
     std::shared_ptr<PUBinder> puManager;
 
@@ -32,11 +32,11 @@ public:
             SPDLOG_WARN("Worker not found: {}", name);
             return false;
         }
-        return workers.at(name).terminate();
+        return workers.at(name)->terminate();
     }
 
     bool terminateAll(){
-        for (auto &[name, worker]: workers) worker.terminate();
+        for (auto &[name, worker]: workers) worker->terminate();
         return true;
     }
 
@@ -46,7 +46,8 @@ public:
             SPDLOG_WARN("Worker already exists.");
             return true;
         }
-        auto [t, b] = workers.try_emplace(name, std::move(WorkerManager<T>(name, puManager, appMsg)));
+        auto wm = WorkerManager::createWorkerManager<T>(name, puManager, appMsg);
+        auto [t, b] = workers.try_emplace(name, wm);
         return b;
     };
 
@@ -59,7 +60,7 @@ public:
             SPDLOG_WARN("Worker not found: {}", name);
             return false;
         }
-        return workers.at(name).runWorker(data);
+        return workers.at(name)->runWorker(data);
     }
 
     bool runWorkerWithCpuBinding(std::string name, std::shared_ptr<void> data = nullptr) {
@@ -67,7 +68,7 @@ public:
             SPDLOG_WARN("Worker not found: {}", name);
             return false;
         }
-        return workers.at(name).runWorkerCpuBinded(data);
+        return workers.at(name)->runWorkerCpuBinded(data);
     }
 
     bool resetWorker(std::string name) {
@@ -75,8 +76,8 @@ public:
             SPDLOG_WARN("Worker not found: {}", name);
             return false;
         }
-        workers.at(name).status.store(WORKER_STATUS::IDLE);
-        return workers.at(name).reset();
+        workers.at(name)->status.store(WORKER_STATUS::IDLE);
+        return workers.at(name)->reset();
     }
 
     WORKER_STATUS getWorkerStatus(std::string name){
@@ -84,7 +85,7 @@ public:
             SPDLOG_WARN("Worker not found: {}", name);
             return WORKER_STATUS::NOT_EXIST;
         }
-        return workers.at(name).getStatus();
+        return workers.at(name)->getStatus();
     }
 
     std::vector<std::string> getWorkerList(){

@@ -63,6 +63,7 @@ elseif(MSVC) # Use Visual Studio as a compiler which comes with C++17!
   endif()
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /DDEBUG")
 endif()
+add_compile_definitions("_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING") # To supress C4996 warning
 
 message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
