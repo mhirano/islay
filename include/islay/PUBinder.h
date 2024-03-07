@@ -26,7 +26,6 @@ inline unsigned int id_to_uint(std::thread::id id){
 class PUBinder{
     hwloc_topology_t topology;
     unsigned int pu_num;
-//    std::vector<std::string> puList; /// Consider having a pointer to workermanager
     std::map<unsigned int, std::string> puMap;
 
 public:
@@ -36,8 +35,6 @@ public:
         int topodepth = hwloc_topology_get_depth(topology);
         pu_num = hwloc_get_nbobjs_by_depth(topology, topodepth-1); // Get PU lists
         SPDLOG_INFO("Number of processing units: {}", pu_num);
-//        puList.resize(pu_num); // -1 means unbinded
-//        std::fill(puList.begin(), puList.end(), "");
         for(unsigned int i=0;i<pu_num;i++){
             puMap[i]="";
         }
@@ -47,7 +44,7 @@ public:
         hwloc_topology_destroy(topology);
     }
 
-    int bindThread(std::string workerName, std::thread::native_handle_type thread, std::thread::id id){
+    int bindThread(std::string threadName, std::thread::native_handle_type thread, std::thread::id id){
         // Pick a vacant PU to bind the thread
         int firstUnbindedPuLogicalInd;
         for(const auto& [k,v]: puMap){
@@ -66,13 +63,13 @@ public:
         // Bind the thread (identified by handle) with the vacant PU
         hwloc_set_thread_cpubind(topology, thread, pu->cpuset, HWLOC_CPUBIND_THREAD);
         assert(pu->logical_index == firstUnbindedPuLogicalInd && "PU and thread was not binded correctly.");
-        puMap[pu->logical_index] = workerName;
+        puMap[pu->logical_index] = threadName;
         return firstUnbindedPuLogicalInd;
     }
 
-    bool unbind(std::string workerName){
+    bool unbind(std::string threadName){
         for(auto&[k,v]: puMap){
-            if(v==workerName) {
+            if(v == threadName) {
                 v="";
                 return true;
             }
@@ -80,9 +77,9 @@ public:
         return false;
     }
 
-    int getPuIfBinded(std::string workerName){
+    int getPuIfBinded(std::string threadName){
         for(const auto& [k,v]:puMap){
-            if(v == workerName) return k;
+            if(v == threadName) return k;
         }
         return -1;
     }

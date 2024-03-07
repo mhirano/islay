@@ -86,6 +86,7 @@ add_executable(${PROJECT_NAME} ${WIN32_FLAG}
         3rdparty/imgui/examples/imgui_impl_sdl.cpp
         3rdparty/imgui/examples/imgui_impl_opengl3.cpp
         3rdparty/imgui/examples/libs/gl3w/GL/gl3w.c
+        include/islay/Worker.cpp
         src/main.cpp
         src/Application.cpp
         src/Engine.cpp

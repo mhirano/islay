@@ -47,7 +47,7 @@ bool WorkerSample::run(const std::shared_ptr<void> data){
     cv::imwrite(Config::get_instance().resultDirectory() + "/lena_imwrite.png", lena );
 
     /**
-     * Show processed image using AppMsg
+     * Show image using AppMsg
      * - Images show up at the same location by default.
      * - You can modify ImageTexture::setImage to show a cv::Mat whose format is not currently supported.
      */
@@ -57,24 +57,37 @@ bool WorkerSample::run(const std::shared_ptr<void> data){
     msgr->send(); // Send the messenger
 
     /**
+     * Send processed images from a dedicated thread with cpu binding
+     */
+    cv::Mat blurred_lena;
+    std::atomic<bool> isShowThreadTerminateRequested(false);
+    auto showThread = std::thread([&](){
+        auto msgr = appMsg->ocvImageMsgCollection.setup("lena_blur"); // make sure to set up each time
+        while(true){
+            auto msg = msgr->prepareMsg();
+            msg->img = blurred_lena;
+            msgr->send();
+            if(isShowThreadTerminateRequested.load()) break;
+        }
+    });
+    requestCpuBind("showThread", showThread.native_handle(), showThread.get_id());
+
+    /**
      * You can measure elapsed time using Util::Bench::bench
      */
     auto elapsedTimeInMs = Util::Bench::bench([&] {
         for (int i = 0; i < 3000; i++) {
-            cv::Mat blurred_lena;
             int k = ceil(rand() % 5) * 8 + 1;
             cv::GaussianBlur(lena, blurred_lena, cv::Size(k, k), 10);
-
-            auto msgr = appMsg->ocvImageMsgCollection.setup("lena_blur"); // make sure to set up each time
-            auto msg = msgr->prepareMsg();
-            msg->img = std::move(blurred_lena);
-            msgr->send();
 
             if (checkIfTerminateRequested()) {
                 break;
             }
         }
     });
+
+    isShowThreadTerminateRequested.store(true);
+    if(showThread.joinable()) showThread.join();
 
     SPDLOG_INFO("WorkerSample took {}ms", elapsedTimeInMs);
 

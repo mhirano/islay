@@ -12,11 +12,11 @@ class EngineBase {
 protected:
     std::map<std::string, std::shared_ptr<WorkerManager>> workers;
     AppMsgPtr appMsg;
-    std::shared_ptr<PUBinder> puManager;
+    std::shared_ptr<PUBinder> puBinder;
 
 public:
     EngineBase (AppMsgPtr _appMsg): appMsg(std::move(_appMsg)),
-    puManager(std::make_shared<PUBinder>())
+                                    puBinder(std::make_shared<PUBinder>())
     {
     };
 
@@ -46,7 +46,7 @@ public:
             SPDLOG_WARN("Worker already exists.");
             return true;
         }
-        auto wm = WorkerManager::createWorkerManager<T>(name, puManager, appMsg);
+        auto wm = WorkerManager::createWorkerManager<T>(name, puBinder, appMsg);
         auto [t, b] = workers.try_emplace(name, wm);
         return b;
     };
@@ -127,7 +127,7 @@ public:
      * PU
      */
     int getPuIfBinded(std::string workerName){
-        return puManager->getPuIfBinded(workerName);
+        return puBinder->getPuIfBinded(workerName);
     };
 
 };

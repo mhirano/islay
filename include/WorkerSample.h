@@ -10,9 +10,6 @@
 /** \brief Sample class of worker with application messenger
  *
  */
-
-class WorkerManager;
-
 class WorkerSample : public WorkerBase {
 public:
     explicit WorkerSample (std::weak_ptr<WorkerManager> wm, AppMsgPtr appMsg):
@@ -20,7 +17,7 @@ public:
     bool run(const std::shared_ptr<void> data);
 };
 
-/** A\brief Sample class of worker with cpu binding
+/** \brief Sample class of worker with cpu binding
  *
  */
 class WorkerSampleWithCpuBinding : public WorkerBase {

@@ -42,21 +42,21 @@ bool Engine::runWorkerSampleWithCpuBinding() {
     /**
      * Run the worker with cpu binding
      */
-    SPDLOG_INFO(puManager->puListStr());
+    SPDLOG_INFO(puBinder->puListStr());
     runWorkerWithCpuBinding("WorkerSampleWithCpuBinding", hoge);
 
-    SPDLOG_INFO(puManager->puListStr());
+    SPDLOG_INFO(puBinder->puListStr());
     std::this_thread::sleep_for(std::chrono::milliseconds (200));
     registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding2");
     runWorkerWithCpuBinding("WorkerSampleWithCpuBinding2");
 
-    SPDLOG_INFO(puManager->puListStr());
+    SPDLOG_INFO(puBinder->puListStr());
 
     std::this_thread::sleep_for(std::chrono::milliseconds (200));
     registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding3");
     runWorkerWithCpuBinding("WorkerSampleWithCpuBinding3");
 
-    SPDLOG_INFO(puManager->puListStr());
+    SPDLOG_INFO(puBinder->puListStr());
 
     return true;
 

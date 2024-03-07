@@ -72,6 +72,10 @@ public:
         }
         return false;
     };
+
+    bool requestCpuBind(
+            std::string workerName, std::thread::native_handle_type thread, std::thread::id id
+    ) ;
 };
 
 /**
@@ -104,7 +108,7 @@ public:
     std::string workerName;
     std::atomic<WORKER_STATUS> status;
     std::shared_ptr<WorkerBase> t;
-    std::weak_ptr<PUBinder> puManager;
+    std::weak_ptr<PUBinder> puBinder;
 
 private:
     /**
@@ -118,22 +122,22 @@ private:
     explicit WorkerManager() { };
 
     template<class T>
-    void init( std::string _workerName, std::weak_ptr<PUBinder> _puManager, AppMsgPtr _appMsg ){
+    void init(std::string _workerName, std::weak_ptr<PUBinder> _puBinder, AppMsgPtr _appMsg ){
         workerName = std::move(_workerName);
         status = WORKER_STATUS::IDLE;
-        puManager = std::move(_puManager);
+        puBinder = std::move(_puBinder);
         t = std::make_shared<T>(this->shared_from_this(), _appMsg);
     }
 
 public:
     template <class T>
     static std::shared_ptr<WorkerManager> createWorkerManager(
-            std::string _workerName, std::weak_ptr<PUBinder> _puManager, AppMsgPtr _appMsg
+            std::string _workerName, std::weak_ptr<PUBinder> _puBinder, AppMsgPtr _appMsg
     ) {
         struct OBJ: WorkerManager{};
         auto sp = std::make_shared<OBJ>();
 //        auto sp = std::make_shared<WorkerManager>(); // private constructor can not be accessed.
-        sp->template init<T>(_workerName,_puManager,_appMsg);
+        sp->template init<T>(_workerName, _puBinder, _appMsg);
         return sp;
     }
 
@@ -148,7 +152,7 @@ public:
         thisThread = std::move(mg.thisThread);
         status.store(mg.status.load());
         t = std::move(mg.t);
-        puManager = std::move(mg.puManager);
+        puBinder = std::move(mg.puBinder);
     }
 
     ~WorkerManager(){
@@ -181,7 +185,7 @@ public:
         if (!thisThread.joinable()){ return false; }
         thisThread.join();
         // Unregister the binding
-        if(puManager.lock()->unbind(workerName))
+        if(puBinder.lock()->unbind(workerName))
             SPDLOG_DEBUG("Worker unbinded: {}", workerName);
         SPDLOG_DEBUG("***********************RESET {}**********************", workerName);
         return true;
@@ -209,7 +213,7 @@ public:
     bool runWorkerCpuBinded(std::shared_ptr<void> data = nullptr){
         if (status.load() == WORKER_STATUS::IDLE) {
             thisThread = std::thread([this, data] {
-                unsigned int logical_id = puManager.lock()->bindThread(
+                unsigned int logical_id = puBinder.lock()->bindThread(
                         workerName, thisThread.native_handle(), thisThread.get_id());
                 if(logical_id != -1){
                     SPDLOG_DEBUG("{} binded to PU #{} (thread id:{})",
@@ -230,4 +234,6 @@ public:
         return true;
     }
 };
+
+
 #endif //ISLAY_WORKER_H
