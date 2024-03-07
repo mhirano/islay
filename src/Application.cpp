@@ -321,6 +321,11 @@ bool Application::run(){
                         } else {
                             ImGui::Text("%s: unknown", name.c_str());
                         }
+                        int puIndIfBinded = engine->getPuIfBinded(name);
+                        if(puIndIfBinded != -1){
+                            ImGui::SameLine();
+                            ImGui::Text("(PU:%d)", puIndIfBinded) ;
+                        }
                         ImGui::NextColumn();
                     }
                     ImGui::EndChild();

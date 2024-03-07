@@ -12,12 +12,13 @@ class EngineBase {
 protected:
     std::map<std::string, WorkerManager<WorkerBase>> workers;
     AppMsgPtr appMsg;
-    std::shared_ptr<PUManager> puManager;
+    std::shared_ptr<PUBinder> puManager;
 
 public:
-    EngineBase (AppMsgPtr _appMsg):
-        appMsg(std::move(_appMsg)),puManager(std::make_shared<PUManager>())
-    {};
+    EngineBase (AppMsgPtr _appMsg): appMsg(std::move(_appMsg)),
+    puManager(std::make_shared<PUBinder>())
+    {
+    };
 
     virtual ~EngineBase(){
         workers.clear();
@@ -120,6 +121,13 @@ public:
         }
         return true;
     }
+
+    /**
+     * PU
+     */
+    int getPuIfBinded(std::string workerName){
+        return puManager->getPuIfBinded(workerName);
+    };
 
 };
 

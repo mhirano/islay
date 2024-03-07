@@ -36,14 +36,14 @@ bool WorkerSample::run(const std::shared_ptr<void> data){
 
     /**
      * Be careful! You can't imshow in a worker.
-     *  - Codes here are executed in a user-created thread, not the main thread.
-     *    This means you cannot draw blurred lena using cv::imshow() here.
+     * - Codes here are executed in a user-created thread, not the main thread.
+     *   This means you cannot draw blurred lena using cv::imshow() here.
      */
     // cv::imshow("test", lena); // THIS CAUSES ERROR.
 
     /**
-     *  You can save a cv::Mat though. Saving blurred lena in the result directory
-     *  - Result files for each execution are stored in a result directory under `result` directory.
+     * You can save a cv::Mat though. Saving blurred lena in the result directory
+     * - Result files for each execution are stored in a result directory under `result` directory.
      */
     cv::imwrite(Config::get_instance().resultDirectory() + "/lena_imwrite.png", lena );
 
@@ -57,7 +57,9 @@ bool WorkerSample::run(const std::shared_ptr<void> data){
     msg->img = lena; // pass an image you want to show to the message
     msgr->send(); // Send the messenger
 
-    /// You can measure elapsed time using Util::Bench::bench
+    /**
+     * You can measure elapsed time using Util::Bench::bench
+     */
     auto elapsedTimeInMs = Util::Bench::bench([&] {
         for (int i = 0; i < 3000; i++) {
             cv::Mat blurred_lena;

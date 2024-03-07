@@ -21,6 +21,7 @@ public:
 
     bool runWorkerSample();
     bool runWorkerSampleWithCpuBinding();
+
 };
 
 
