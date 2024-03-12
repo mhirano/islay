@@ -184,9 +184,6 @@ public:
     bool reset(){
         if (!thisThread.joinable()){ return false; }
         thisThread.join();
-        // Unregister the binding
-        if(puBinder.lock()->unbind(workerName))
-            SPDLOG_DEBUG("Worker unbinded: {}", workerName);
         SPDLOG_DEBUG("***********************RESET {}**********************", workerName);
         return true;
     };
@@ -227,6 +224,9 @@ public:
                 t->run(data);
                 status.store(WORKER_STATUS::JOINABLE);
                 SPDLOG_INFO("Worker completed: {}", workerName);
+                // Unregister the binding
+                if(puBinder.lock()->unbind(workerName))
+                    SPDLOG_DEBUG("Worker unbinded: {}", workerName);
             });
         } else {
             SPDLOG_INFO("{} is already running", workerName);

@@ -12,9 +12,6 @@
 #include <windows.h>
 #else
 #endif
-//
-//class WorkerBase;
-//class WorkerManager;
 
 inline unsigned int id_to_uint(std::thread::id id){
     std::ostringstream os;
@@ -71,6 +68,7 @@ public:
         for(auto&[k,v]: puMap){
             if(v == threadName) {
                 v="";
+                /// TODO: check if binded thread is already joined.
                 return true;
             }
         }
