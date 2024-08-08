@@ -64,7 +64,8 @@ RUN echo "export VISIBLE=now" >> /etc/profile
 
 # SSH user for CLion 
 RUN useradd -ms /bin/bash clion && \
-    echo 'clion:clion' | chpasswd
+    echo 'clion:clion' | chpasswd && \
+    usermod -aG sudo clion
 
 # Set DISPLAY globally for GDB
 COPY display.env /tmp

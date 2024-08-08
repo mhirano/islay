@@ -56,7 +56,7 @@ private:
         std::string resultParentDirectory_(resultParentDirectoryChar);
         std::string resultDirName = resultParentDirectory_ + "/" + currentDateAndTime;
 
-		std::filesystem::path path(resultDirName);
+        std::filesystem::path path(resultDirName);
         std::error_code error;
         const bool result = std::filesystem::create_directory(path, error);
         if (!result || error) {
