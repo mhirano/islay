@@ -214,8 +214,7 @@ public:
                         workerName, thisThread.native_handle(), thisThread.get_id());
                 if(logical_id != -1){
                     SPDLOG_DEBUG("{} binded to PU #{} (thread id:{})",
-                                workerName, logical_id, id_to_uint(thisThread.get_id())
-                    );
+                                 workerName, logical_id, id_to_str(thisThread.get_id()));
                 } else {
                     SPDLOG_WARN("Failed to bind the thread to a PU. No vacant PUs.");
                 }

@@ -96,30 +96,24 @@ bool WorkerSample::run(const std::shared_ptr<void> data){
 
 bool WorkerSampleWithCpuBinding::run(const std::shared_ptr<void> data) {
 
-    auto PrintUsingProccessor = [](hwloc_topology_t t) {
-        {
-            constexpr int N = 30;
-            hwloc_bitmap_t b = hwloc_bitmap_alloc();
-            hwloc_obj_t pu, core;
-            for (int i = 0; i < N; ++i) {
-                hwloc_get_last_cpu_location(t, b, HWLOC_CPUBIND_THREAD);
-                pu = hwloc_get_pu_obj_by_os_index(t, hwloc_bitmap_first(b));
-                core = pu->parent;
-                std::stringstream os;
-                os << "Thread_id=" << std::this_thread::get_id() << ", "
-                     << "Processor=" << pu->logical_index
-                     << "(" << core->logical_index << ")";
-                SPDLOG_INFO("{}", os.str());
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
-            }
-            hwloc_bitmap_free(b);
-        }
-    };
+    // Do some heavy tasks
+    cv::Mat lena(Config::get_instance().readIntParam("IMAGE_WIDTH"),
+                 Config::get_instance().readIntParam("IMAGE_HEIGHT"), CV_8UC3);
+    lena = cv::imread(
+            Config::get_instance().resourceDirectory() + "/" +
+            Config::get_instance().readStringParam("IMG_PATH"));
 
-    hwloc_topology_t t;
-    hwloc_topology_init(&t);
-    hwloc_topology_load(t);
-    PrintUsingProccessor(t);
+    cv::Mat blurred_lena;
+    auto elapsedTimeInMs = Util::Bench::bench([&] {
+        for (int i = 0; i < 3000; i++) {
+            int k = ceil(rand() % 5) * 8 + 1;
+            cv::GaussianBlur(lena, blurred_lena, cv::Size(k, k), 10);
+
+            if (checkIfTerminateRequested()) {
+                break;
+            }
+        }
+    });
 
     return true;
 }

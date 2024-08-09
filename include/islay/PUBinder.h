@@ -13,11 +13,11 @@
 #else
 #endif
 
-inline unsigned int id_to_uint(std::thread::id id){
+inline std::string id_to_str(std::thread::id id){
     std::ostringstream os;
     os.clear(); os.str("");
     os << id;
-    return std::stoi(os.str());
+    return os.str();
 }
 
 class PUBinder{
@@ -87,7 +87,11 @@ public:
         std::ostringstream os;
         os.str(""); os.clear();
         for(const auto& [k,v]: puMap){
-            os << k << ":" << v << ", ";
+            if(v==""){
+                os << k << ":" << " " << ", ";
+            } else{
+                os << k << ":" << v << ", ";
+            }
         }
         return os.str();
     }

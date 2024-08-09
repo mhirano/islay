@@ -32,7 +32,7 @@ bool Engine::runWorkerSampleWithCpuBinding() {
     /**
      * Register a worker with its name
      */
-    registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding");
+    registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding_0");
 
     /**
      * You can pass a variable to the worker as a shared pointer.
@@ -43,19 +43,19 @@ bool Engine::runWorkerSampleWithCpuBinding() {
      * Run the worker with cpu binding
      */
     SPDLOG_INFO(puBinder->puListStr());
-    runWorkerWithCpuBinding("WorkerSampleWithCpuBinding", hoge);
 
-    SPDLOG_INFO(puBinder->puListStr());
-    std::this_thread::sleep_for(std::chrono::milliseconds (200));
-    registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding2");
-    runWorkerWithCpuBinding("WorkerSampleWithCpuBinding2");
-
+    runWorkerWithCpuBinding("WorkerSampleWithCpuBinding_0", hoge);
+    std::this_thread::sleep_for(std::chrono::milliseconds (10));
     SPDLOG_INFO(puBinder->puListStr());
 
-    std::this_thread::sleep_for(std::chrono::milliseconds (200));
-    registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding3");
-    runWorkerWithCpuBinding("WorkerSampleWithCpuBinding3");
+    registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding_1");
+    runWorkerWithCpuBinding("WorkerSampleWithCpuBinding_1");
+    std::this_thread::sleep_for(std::chrono::milliseconds (10));
+    SPDLOG_INFO(puBinder->puListStr());
 
+    registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding_2");
+    runWorkerWithCpuBinding("WorkerSampleWithCpuBinding_2");
+    std::this_thread::sleep_for(std::chrono::milliseconds (10));
     SPDLOG_INFO(puBinder->puListStr());
 
     return true;

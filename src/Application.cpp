@@ -211,7 +211,7 @@ bool Application::run(){
                             SPDLOG_INFO("Video recording start: {}", windowRecordingFileName);
                             writer = cv::VideoWriter(
                                     Config::get_instance().resultDirectory() + "/" + windowRecordingFileName,
-                                    cv::VideoWriter::fourcc('x', '2', '6', '4'), fps_encode,
+                                    cv::VideoWriter::fourcc('H', '2', '6', '4'), fps_encode,
                                     cv::Size((int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x,
                                              (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y));
                             windowRecordingStatus = WINDOW_RECORDING_STATUS::REQUESTED;
