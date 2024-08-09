@@ -79,20 +79,12 @@ endif()
 # Adding executable
 ######## ######## ######## ######## ######## ######## ######## ########
 add_executable(${PROJECT_NAME} ${WIN32_FLAG}
-        3rdparty/imgui/imgui.cpp
-        3rdparty/imgui/imgui_demo.cpp
-        3rdparty/imgui/imgui_draw.cpp
-        3rdparty/imgui/imgui_widgets.cpp
-        3rdparty/imgui/examples/imgui_impl_sdl.cpp
-        3rdparty/imgui/examples/imgui_impl_opengl3.cpp
-        3rdparty/imgui/examples/libs/gl3w/GL/gl3w.c
         include/islay/Worker.cpp
         src/main.cpp
         src/Application.cpp
         src/Engine.cpp
         src/WorkerSample.cpp
 )
-set_source_files_properties(imgui/examples/libs/gl3w/GL/gl3w.c PROPERTIES COMPILE_FLAGS -Wno-pedantic)
 ######## ######## ######## ######## ######## ######## ######## ########
 
 
@@ -123,52 +115,43 @@ target_include_directories( ${PROJECT_NAME} PRIVATE 3rdparty/rapidjson/include)
 ## spdlog
 target_include_directories(${PROJECT_NAME} PRIVATE 3rdparty/spdlog/include)
 
-## SDL2
-find_package(SDL2 CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME}
-        PRIVATE
-        $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
-        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
-)
-
-## GLEW
-find_package(GLEW REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE GLEW::GLEW)
-
-## GLM
-find_package(glm CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
-
-## GLFW
-if (UNIX) # UNIX AND APPLE
+## Dear Imgui & implot
+find_package(SDL2 REQUIRED)
 find_package(GLFW REQUIRED)
-elseif(WIN32) # vcpkg
-find_package(glfw3 REQUIRED)
-endif()
-target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
+find_package(GLEW REQUIRED)
+find_package(glm REQUIRED)
 
-## ImGui
-target_include_directories(
-        ${PROJECT_NAME}
-        PRIVATE
-        3rdparty/imgui
-        3rdparty/imgui/examples
-        3rdparty/imgui/examples/libs/gl3w
-)
-
-## implot for Dear ImGui
-target_include_directories(
-        ${PROJECT_NAME}
-        PRIVATE
-        3rdparty/implot
-)
-add_library(IMPLOT OBJECT
+add_library(imgui SHARED
+        # imgui
+        3rdparty/imgui/imgui.cpp
+        3rdparty/imgui/imgui_demo.cpp
+        3rdparty/imgui/imgui_draw.cpp
+        3rdparty/imgui/imgui_widgets.cpp
+        3rdparty/imgui/examples/imgui_impl_sdl.cpp
+        3rdparty/imgui/examples/imgui_impl_opengl3.cpp
+        3rdparty/imgui/examples/libs/gl3w/GL/gl3w.c
+        # implot
         3rdparty/implot/implot.h
         3rdparty/implot/implot_internal.h
         3rdparty/implot/implot.cpp
-        3rdparty/implot/implot_items.cpp)
-target_include_directories(IMPLOT PRIVATE 3rdparty/imgui )
-target_link_libraries(${PROJECT_NAME} PRIVATE IMPLOT)
+        3rdparty/implot/implot_items.cpp
+)
+set_source_files_properties(imgui/examples/libs/gl3w/GL/gl3w.c PROPERTIES COMPILE_FLAGS -Wno-pedantic)
+
+target_include_directories(imgui PUBLIC
+  3rdparty/imgui
+  3rdparty/imgui/examples
+  3rdparty/imgui/examples/libs/gl3w
+  ${SDL2_INCLUDE_DIRS}
+  3rdparty/implot
+)
+if(UNIX AND NOT APPLE)
+  target_link_libraries(imgui PUBLIC ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GLEW::GLEW GL dl )
+else(APPLE)
+  target_link_libraries(imgui PUBLIC ${SDL2_LIBRARIES} ${GLFW_LIBRARIES} GLEW::GLEW dl)
+endif()
+
+target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
 
 ## hwloc
 # Currenlty hwloc does not support find_package, but is planned to supprot according to this PR (https://github.com/open-mpi/hwloc/pull/566). Stay tuned to the PR getting merged to the official release.
