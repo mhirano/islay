@@ -7,15 +7,15 @@
 
 #include <iostream>
 
-#ifdef DEBUG
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE // SPDLOG_LEVEL_TRACE
-#else
+#ifdef NDEBUG
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO // All DEBUG/TRACE statements will be removed by the pre-processor
+#else
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE // SPDLOG_LEVEL_TRACE
 #endif
-#include "spdlog/spdlog.h"
-#include "spdlog/sinks/basic_file_sink.h" // support for basic file logging
-#include "spdlog/sinks/stdout_color_sinks.h" // or "../stdout_sinks.h" if no colors needed
-#include "spdlog/sinks/ostream_sink.h"
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h> // support for basic file logging
+#include <spdlog/sinks/stdout_color_sinks.h> // or "../stdout_sinks.h" if no colors needed
+#include <spdlog/sinks/ostream_sink.h>
 
 class Logger
 {

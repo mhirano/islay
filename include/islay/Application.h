@@ -14,7 +14,7 @@
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_apps.h"
-#include <stdio.h>
+#include <cstdio>
 #include <SDL.h>
 #include <string>
 #include <opencv2/opencv.hpp>

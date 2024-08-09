@@ -5,8 +5,6 @@
 #ifndef ISLAY_IMAGETEXTURE_H
 #define ISLAY_IMAGETEXTURE_H
 
-//#include <cstdio>
-//#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -34,6 +32,9 @@ private:
     GLuint my_opengl_texture;
 
 public:
+    ImageTexture(){
+        glGenTextures(1, &my_opengl_texture);
+    }
     ~ImageTexture(){
         glBindTexture(GL_TEXTURE_2D, 0);  // unbind texture
         glDeleteTextures(1, &my_opengl_texture);
@@ -47,7 +48,6 @@ public:
             width = pframe->cols;
             height = pframe->rows;
 
-            glGenTextures(1, &my_opengl_texture);
             glBindTexture(GL_TEXTURE_2D, my_opengl_texture);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

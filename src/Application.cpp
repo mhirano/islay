@@ -2,25 +2,23 @@
 // Created by Masahiro Hirano <masahiro.dll@gmail.com>
 //
 
-#include "Application.h"
-#include <opencv2/opencv.hpp>
-#include "imgui_apps.h"
-#include "implot.h"
+#include <islay/Application.h>
 
+#include <islay/imgui_apps.h>
+#include <islay/ImageTexture.h>
 #include "AppMsg.h"
+#include <islay/Config.h>
+#include <islay/Logger.h>
+#include <islay/Utility.h>
+#include <implot.h>
+
+#include <opencv2/opencv.hpp>
+
 #include "Engine.h"
-#include "ImageTexture.h"
-#include "Config.h"
-#include "Logger.h"
-#include "Utility.h"
 
 Application::Application() {
-// Setup SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
-    {
         printf("Error: %s\n", SDL_GetError());
-//        return -1;
-    }
 
 // Decide GL+GLSL versions
 #if __APPLE__
@@ -46,9 +44,9 @@ Application::Application() {
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 #ifdef DEBUG
-    window = SDL_CreateWindow("islay - debug", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1440, 1080, window_flags);
+    window = SDL_CreateWindow("islay - debug", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1440, 900, window_flags);
 #else
-    window = SDL_CreateWindow("islay", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1440, 1080, window_flags);
+    window = SDL_CreateWindow("islay", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1440, 900, window_flags);
 #endif
     gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
@@ -117,10 +115,10 @@ bool Application::run(){
 //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 //IM_ASSERT(font != NULL);
 #ifdef _MSC_VER
-	ImFont* font = io.Fonts->AddFontFromFileTTF("../../font/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+	ImFont* font = io.Fonts->AddFontFromFileTTF("../3rdparty/imgui/misc/fonts/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     IM_ASSERT(font != NULL);
 #else
-	ImFont* font = io.Fonts->AddFontFromFileTTF("../font/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+	ImFont* font = io.Fonts->AddFontFromFileTTF("../3rdparty/imgui/misc/fonts/mplus-1p-medium.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 	IM_ASSERT(font != NULL);
 #endif
 
@@ -139,8 +137,13 @@ bool Application::run(){
     Logger::get_instance().setExportDirectory(Config::get_instance().resultDirectory());
 
     AppMsgPtr appMsg = std::make_shared<AppMsg>();
-    std::shared_ptr<EngineOffline> engine(new EngineOffline(appMsg));
+    std::shared_ptr<Engine> engine(new Engine(appMsg));
     std::map<std::string, ImageTexture> texturePool;
+    std::map<std::string, ImVec2> textureSizePool;
+    auto clearTexturePool=[&](){
+        texturePool.clear();
+        textureSizePool.clear();
+    };
 
     enum SHOW_IMAGE_MODE {IMGUI = 0, OPENCV = 1};
     static int selectedShowImageMode = SHOW_IMAGE_MODE::IMGUI;
@@ -149,11 +152,11 @@ bool Application::run(){
     bool done = false;
     while (!done)
     {
-// Poll and handle events (inputs, window resize, etc.)
-// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-// - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-// Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+        /// Poll and handle events (inputs, window resize, etc.)
+        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
+        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
+        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -164,143 +167,22 @@ bool Application::run(){
                 done = true;
         }
 
-
-// Start the Dear ImGui frame
+        /// Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame(window);
         ImGui::NewFrame();
 
-// Dear ImGui demo
-        {
-            ImGui::ShowDemoWindow();
-        }
-
-
-// Commands
-        {
-            ImGui::Begin("Commands");
-            /// Check if the worker finished
-
-            static WORKER_STATUS observedWorkerStatus(WORKER_STATUS::IDLE);
-            if (observedWorkerStatus == WORKER_STATUS::RUNNING &&
-                engine->getWorkerStatus() == WORKER_STATUS::IDLE) {
-                engine->reset();
-            }
-            observedWorkerStatus = engine->getWorkerStatus();
-
-            if (ImGui::Button("Command Sample: Blur lena randomly")) {
-                if(observedWorkerStatus == WORKER_STATUS::IDLE){
-                    engine->run();
-                } else {
-                    ImGui::Text("Command ignored");
-                }
-            }
-            ImGui::SameLine();
-            if (observedWorkerStatus == WORKER_STATUS::IDLE){
-                ImGui::Text("Worker: idle");
-            } else if (observedWorkerStatus == WORKER_STATUS::RUNNING){
-                ImGui::Text("Worker: running");
-            } else {
-                ImGui::Text("Worker: unknown");
-            }
-            if (ImGui::Button("Exit")){
-                done = true;
-            }
-            ImGui::End();
-        }
-
-
-
-        /// Destroy OpenCV windows if exists
-        if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) { /// Use ImGui
-            cv::destroyAllWindows();
-        }
-
-        static float imguiImageScale = 1.0f; /// image scale for imgui rendering
-        DispMsg *md = appMsg->displayMessenger->receive();
-        if (md != nullptr) { // texture pool updated
-            if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI){
-                texturePool.clear();
-                for (auto img_in_pool:md->pool) {
-                    std::string winname = img_in_pool.first;
-                    ImVec2 imgSize(img_in_pool.second.cols, img_in_pool.second.rows);
-                    ImGui::Begin(winname.c_str());
-                    texturePool[img_in_pool.first].setImage(&img_in_pool.second);
-                    ImGui::Image(texturePool[img_in_pool.first].getOpenglTexture(),
-                                 ImVec2(imgSize.x * imguiImageScale, imgSize.y * imguiImageScale),
-                                 ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
-                                 );
-                    ImGui::End();
-                }
-            } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){
-                for (auto& img_in_pool:md->pool) {
-                    std::string winname = img_in_pool.first;
-                    cv::namedWindow(winname,cv::WINDOW_NORMAL);
-                    cv::imshow(winname, img_in_pool.second);
-                }
-                cv::waitKey(1);
-            }
-        } else { // texture pool not updated
-            if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI){
-                for (auto &texture: texturePool) {
-                    std::string winname = texture.first;
-                    ImVec2 imgSize = texturePool[texture.first].getSize();
-                    ImGui::Begin(winname.c_str());
-                    ImGui::Image(texturePool[texture.first].getOpenglTexture(),
-                                 ImVec2(imgSize.x * imguiImageScale, imgSize.y * imguiImageScale),
-                                 ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
-                                 );
-                    ImGui::End();
-                }
-            } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){
-                cv::waitKey(1);
-            }
-        }
-
-        {
-            static float xs1[1001], ys1[1001];
-            double DEMO_TIME = ImGui::GetTime();
-            for (int i = 0; i < 1001; ++i) {
-                xs1[i] = i * 0.001f;
-                ys1[i] = 0.5f + 0.5f * sinf(50 * (xs1[i] + (float)DEMO_TIME / 10));
-            }
-            static double xs2[11], ys2[11];
-            for (int i = 0; i < 11; ++i) {
-                xs2[i] = i * 0.1f;
-                ys2[i] = xs2[i] * xs2[i];
-            }
-            ImGui::Begin("Plot");
-            ImGui::BulletText("Anti-aliasing can be enabled from the plot's context menu (see Help).");
-            if (ImPlot::BeginPlot("Line Plot", "x", "f(x)")) {
-                ImPlot::PlotLine("sin(x)", xs1, ys1, 1001);
-                ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-                ImPlot::PlotLine("x^2", xs2, ys2, 11);
-                ImPlot::EndPlot();
-            }
-            ImGui::End();
-        }
-
-        {
-            DrawJsonConfig("config", Config::get_instance().getDocument());
-        }
-
-        {
-            Logger::get_instance().logger->flush();
-            my_log.AddLog( "%s", Logger::get_instance().oss.str().c_str() );
-            Logger::get_instance().oss.str("");
-            Logger::get_instance().oss.clear();
-            my_log.Draw("Log");
-        }
-
+        /// GUI controller window
+        static ImVec2 guiControllerWindowSize, guiControllerWindowPos;
         {
             const float DISTANCE = 10.0f;
             static float f = 0.0f;
             ImVec2 window_pos = ImVec2(DISTANCE, DISTANCE);
             ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
             ImGui::SetNextWindowPos(window_pos, ImGuiCond_Appearing, window_pos_pivot);
-            ImGui::SetNextWindowSize(ImVec2(300,200), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(300,240), ImGuiCond_Always);
             ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
-            if (ImGui::Begin("GUI", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+            if (ImGui::Begin("GUI", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove))
             {
                 {
                     ImGui::Text("GUI runs at %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -324,12 +206,13 @@ bool Application::run(){
                     ImGui::Indent();
                     if (ImGui::Button("Start")) {
                         if (windowRecordingStatus == WINDOW_RECORDING_STATUS::PAUSED) {
-                            int fps_encode = 30;
+                            int fps_encode = 60;
                             windowRecordingFileName = "recording_" + Util::now() + ".mp4";
                             SPDLOG_INFO("Video recording start: {}", windowRecordingFileName);
+                            // FIXME: Framerate doesn't concide with the refresh rate, which can result in slow-mo video.
                             writer = cv::VideoWriter(
                                     Config::get_instance().resultDirectory() + "/" + windowRecordingFileName,
-                                    cv::VideoWriter::fourcc('m', 'p', '4', 'v'), fps_encode,
+                                    cv::VideoWriter::fourcc('H', '2', '6', '4'), fps_encode,
                                     cv::Size((int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x,
                                              (int) io.DisplaySize.y * (int) io.DisplayFramebufferScale.y));
                             windowRecordingStatus = WINDOW_RECORDING_STATUS::REQUESTED;
@@ -351,16 +234,272 @@ bool Application::run(){
                     }
                     ImGui::Unindent();
                 }
+                {
+                    ImGui::Text("Exit program");
+                    ImGui::Indent();
+                    if (ImGui::Button("Exit")) {
+                        done = true;
+                    }
+                }
+            }
+            guiControllerWindowSize = ImGui::GetWindowSize();
+            guiControllerWindowPos = ImGui::GetWindowPos();
+            ImGui::End();
+        }
+
+        /// Dear ImGui demo
+        {
+            ImGui::ShowDemoWindow();
+        }
+
+        /// Workers window
+        static ImVec2 workerWindowSize, workerWindowPos;
+        {
+            const float DISTANCE = 10.0f;
+            static float f = 0.0f;
+            ImVec2 window_pos = ImVec2(DISTANCE, guiControllerWindowPos.y + guiControllerWindowSize.y + DISTANCE);
+            ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
+            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Appearing, window_pos_pivot);
+            ImGui::SetNextWindowSizeConstraints(ImVec2(300, 0), ImVec2(300, 600));
+            ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+            if(ImGui::Begin("Commands", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove ))
+            {
+                ImGui::Text("Workers:");
+                {
+                    ImGui::NewLine(); ImGui::SameLine();
+                    ImGui::Text("WorkerSample");
+                    ImGui::NewLine(); ImGui::SameLine();
+                    if (ImGui::Button("Launch##WorkerSample")) {
+                        engine->runWorkerSample();
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button("Terminate##WorkerSample")) {
+                        engine->terminateWorker("WorkerSample");
+                    }
+                }
+                {
+                    ImGui::NewLine(); ImGui::SameLine();
+                    ImGui::Text("WorkerSample with CPU binding");
+                    ImGui::NewLine(); ImGui::SameLine();
+                    if (ImGui::Button("Launch##WorkerSampleWithCpuBinding")) {
+                        engine->runWorkerSampleWithCpuBinding();
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button("Terminate##WorkerSampleWithCpuBinding")) {
+                        engine->terminateWorker("WorkerSampleWithCpuBinding");
+                    }
+                }
+                {// Add your worker here as above
+
+                }
+                ImGui::NewLine(); ImGui::SameLine();
+                ImGui::Text("Delete workers");
+                ImGui::NewLine(); ImGui::SameLine();
+                if (ImGui::Button("Delete workers")) {
+                    engine->deleteAllWorker();
+                }
+                ImGui::Separator();
+                {
+                    ImGui::Text("Worker Status:");
+                    ImVec2 child_size = ImVec2(0, ImGui::GetFontSize() * 5.0f);
+                    ImGui::BeginChild("##ScrollingRegion_worker-status", child_size, false, ImGuiWindowFlags_HorizontalScrollbar);
+                    for (auto &name: engine->getWorkerList()) {
+                        ImGui::NewLine();
+                        WORKER_STATUS observedWorkerStatus;
+                        observedWorkerStatus = engine->getWorkerStatus(name);
+                        if (observedWorkerStatus == WORKER_STATUS::JOINABLE) {
+                            engine->resetWorker(name);
+                        }
+                        ImGui::SameLine();
+                        if (observedWorkerStatus == WORKER_STATUS::IDLE) {
+                            ImGui::Text("%s: idle", name.c_str());
+                        } else if (observedWorkerStatus == WORKER_STATUS::RUNNING) {
+                            ImGui::Text("%s: running", name.c_str());
+                        } else if (observedWorkerStatus == WORKER_STATUS::TERMINATE_REQUESTED) {
+                            ImGui::Text("%s: terminate requested", name.c_str());
+                        } else if (observedWorkerStatus == WORKER_STATUS::JOINABLE) {
+                            ImGui::Text("%s: joinable", name.c_str());
+                        } else {
+                            ImGui::Text("%s: unknown", name.c_str());
+                        }
+                        int puIndIfBinded = engine->getPuIfBinded(name);
+                        if(puIndIfBinded != -1){
+                            ImGui::SameLine();
+                            ImGui::Text("(PU:%d)", puIndIfBinded) ;
+                        }
+                        ImGui::NextColumn();
+                    }
+                    ImGui::EndChild();
+
+                }
+                workerWindowPos = ImGui::GetWindowPos();
+                workerWindowSize = ImGui::GetWindowSize();
+                ImGui::End();
+            }
+        }
+
+        /// Shown images window
+        {
+            const float DISTANCE = 10.0f;
+            static float f = 0.0f;
+            ImVec2 window_pos = ImVec2(DISTANCE, workerWindowPos.y + workerWindowSize.y + DISTANCE);
+            ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
+            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Appearing, window_pos_pivot);
+            ImGui::SetNextWindowSizeConstraints(ImVec2(300, 0), ImVec2(300, 600));
+            ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+            if(ImGui::Begin("Images", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove)) {
+                ImGui::Text("Images:");
+                ImGui::NewLine();
+                ImGui::SameLine();
+                // TODO: make items clickable and the clicked window be active
+                if (ImGui::Button("Delete images")) {
+                    if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI){
+                        clearTexturePool();
+                        appMsg->ocvImageMsgCollection.clear();
+                    } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV){
+                        cv::destroyAllWindows();
+                    }
+                }
+
+                ImVec2 child_size = ImVec2(0, ImGui::GetFontSize() * 5.0f);
+                ImGui::BeginChild("##ScrollingRegion_image", child_size, false, ImGuiWindowFlags_HorizontalScrollbar);
+                static ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet
+                int id=0;
+                for (const auto &texture: texturePool)
+                {
+                    ImGui::TreeNodeEx((void *) (intptr_t) id++, node_flags, "%s", texture.first.c_str());
+                    if (ImGui::IsItemClicked()){
+                        SPDLOG_INFO("{} pressed", texture.first.c_str());
+                        ImGui::SetWindowFocus(texture.first.c_str());
+                    }
+                }
+                ImGui::EndChild();
+                ImGui::End();
+            }
+        }
+
+        /// Display images
+        {
+            // Destroy OpenCV windows if exists
+            if(selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) { /// Use ImGui
+                cv::destroyAllWindows();
+            }
+
+            // Render images in texturePool
+            for (auto &e: appMsg->ocvImageMsgCollection.pool) {
+                auto msg = e.second->receive();
+                if (msg != nullptr) {
+                    if (selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) {
+                        std::string winname = e.first;
+                        if (textureSizePool.count(winname) == 0) {
+                            ImGui::SetNextWindowSize(ImVec2(msg->img.cols, msg->img.rows));
+                            textureSizePool[winname] = ImVec2(msg->img.cols, msg->img.rows);
+                        } else {
+                            ImGui::SetNextWindowSize(ImVec2(textureSizePool[winname].x, textureSizePool[winname].y));
+                        }
+                        if (ImGui::Begin(winname.c_str())) {
+                            bool isWindowCollapsed = ImGui::IsWindowCollapsed();
+                            texturePool[winname].setImage(&msg->img);
+                            ImGui::Image(texturePool[winname].getOpenglTexture(),
+                                         ImVec2(textureSizePool[winname].x - 20, textureSizePool[winname].y - 40),
+                                         ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
+                            );
+                            if (!isWindowCollapsed) {
+                                float scale = std::min<float>(ImGui::GetWindowSize().x / textureSizePool[winname].x,
+                                                              ImGui::GetWindowSize().y / textureSizePool[winname].y);
+                                textureSizePool[winname] = ImVec2(textureSizePool[winname].x * scale,
+                                                                  textureSizePool[winname].y * scale);
+                            }
+                        }
+                        ImGui::End();
+                    } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV) {
+                        std::string winname = e.first;
+                        cv::namedWindow(winname, cv::WINDOW_NORMAL);
+                        cv::imshow(winname, msg->img);
+                    }
+                } else {
+                    if (selectedShowImageMode == SHOW_IMAGE_MODE::IMGUI) {
+                        std::string winname = e.first;
+                        ImGui::SetNextWindowSize(ImVec2(textureSizePool[winname].x, textureSizePool[winname].y));
+                        if (ImGui::Begin(winname.c_str())) {
+                            bool isWindowCollapsed = ImGui::IsWindowCollapsed();
+                            ImGui::Image(texturePool[winname].getOpenglTexture(),
+                                         ImVec2(textureSizePool[winname].x - 20, textureSizePool[winname].y - 40),
+                                         ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)
+                            );
+                            if (!isWindowCollapsed) {
+                                float scale = std::min<float>(ImGui::GetWindowSize().x / textureSizePool[winname].x,
+                                                              ImGui::GetWindowSize().y / textureSizePool[winname].y);
+                                textureSizePool[winname] = ImVec2(textureSizePool[winname].x * scale,
+                                                                  textureSizePool[winname].y * scale);
+                            }
+                        };
+                        ImGui::End();
+                    } else if (selectedShowImageMode == SHOW_IMAGE_MODE::OPENCV) {
+                        cv::waitKey(1);
+                    }
+                }
+            }
+        }
+
+        /// Plot window
+        {
+            static float xs1[1001], ys1[1001];
+            double DEMO_TIME = ImGui::GetTime();
+            for (int i = 0; i < 1001; ++i) {
+                xs1[i] = i * 0.001f;
+                ys1[i] = 0.5f + 0.5f * sinf(50 * (xs1[i] + (float)DEMO_TIME / 10));
+            }
+            static double xs2[11], ys2[11];
+            for (int i = 0; i < 11; ++i) {
+                xs2[i] = i * 0.1f;
+                ys2[i] = xs2[i] * xs2[i];
+            }
+            ImGui::Begin("Plot");
+            ImGui::BulletText("Anti-aliasing can be enabled from the plot's context menu (see Help).");
+            if (ImPlot::BeginPlot("Line Plot", "x", "f(x)")) {
+                ImPlot::PlotLine("sin(x)", xs1, ys1, 1001);
+                ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+                ImPlot::PlotLine("x^2", xs2, ys2, 11);
+                ImPlot::EndPlot();
             }
             ImGui::End();
+        }
 
+        /// Config window
+        float configHeight = 160;
+        {
+            const float DISTANCE = 10.0f;
+            ImVec2 window_size = io.DisplaySize;
+            ImVec2 window_pos = ImVec2(window_size.x/2, DISTANCE);
+            ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
+            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Appearing, window_pos_pivot);
+            ImGui::SetNextWindowSize(ImVec2(window_size.x/2-DISTANCE,configHeight), ImGuiCond_Once);
+            ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+            DrawJsonConfig("config", Config::get_instance().getDocument());
+        }
+
+        /// Logger window
+        {
+            Logger::get_instance().logger->flush();
+            my_log.AddLog( "%s", Logger::get_instance().oss.str().c_str() );
+            Logger::get_instance().oss.str("");
+            Logger::get_instance().oss.clear();
+            const float DISTANCE = 10.0f;
+			ImVec2 window_size = io.DisplaySize;
+			ImVec2 window_pos = ImVec2(window_size.x/2, DISTANCE*2+configHeight);
+			ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
+			ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+			ImGui::SetNextWindowSize(ImVec2(window_size.x/2-DISTANCE,window_size.y-3*DISTANCE-configHeight), ImGuiCond_Once);
+			ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+            my_log.Draw("Log");
         }
 
         /// Rendering
         ImGui::Render();
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
 
-        /// Window capture and recording
+        /// Screen capture and recording
         if (requestedWindowCapture) {
             glFinish();
             int width = (int) io.DisplaySize.x * (int) io.DisplayFramebufferScale.x;
@@ -397,6 +536,11 @@ bool Application::run(){
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
+
+    engine->terminateAll(); // Request all workers to terminate
+    engine->reset(); // Join all threads of workers
+
+    SPDLOG_INFO("Program terminated successfully. See you!");
 
     return true;
 }

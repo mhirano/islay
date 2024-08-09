@@ -7,10 +7,10 @@
 
 #include <iostream>
 #include <string>
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
-#include "rapidjson/filewritestream.h"
-#include "rapidjson/prettywriter.h"
+#include <rapidjson/document.h>
+#include <rapidjson/filereadstream.h>
+#include <rapidjson/filewritestream.h>
+#include <rapidjson/prettywriter.h>
 
 // Usage:
 //  static ExampleAppLog my_log;
@@ -164,7 +164,8 @@ static void DrawJsonConfig(std::string jsonName, const rapidjson::Document &conf
         return str;
     };
 
-    ImGui::Begin(jsonName.c_str());
+    ImGui::Begin(jsonName.c_str(), nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove);
+    ImGui::BeginChild("##Config_List", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
     for (rapidjson::Value::ConstMemberIterator itr = config.MemberBegin(); itr != config.MemberEnd(); itr++) {
         const rapidjson::Value &n = itr->name;
         const rapidjson::Value &v = itr->value;
@@ -196,6 +197,7 @@ static void DrawJsonConfig(std::string jsonName, const rapidjson::Document &conf
                 break;
         }
     }
+    ImGui::EndChild();
     ImGui::End();
 }
 

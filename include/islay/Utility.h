@@ -5,18 +5,10 @@
 #ifndef ISLAY_UTILITY_H
 #define ISLAY_UTILITY_H
 
-//#include <time.h>
 #include <iostream>
-//#include <vector>
-//#include <numeric>
-//#include <fstream>
-//#include <cmath>
 #include <chrono>
-//#include <sstream>
 
 #include <opencv2/opencv.hpp>
-
-//#define PI 3.14159265358979323846
 
 namespace Util {
 
@@ -89,6 +81,49 @@ namespace Util {
            << std::setw(2) << std::setfill('0') << tm_now->tm_min
            << std::setw(2) << std::setfill('0') << tm_now->tm_sec;
         return os.str();
+    }
+
+    /* How to use:
+        Bench::bench([&]{
+            // process to bench
+            // outputs elapsed time in milliseconds, like 30 [ms]
+        });
+
+        Bench::bench<std::chrono::milliseconds>([&]{
+            // process to bench
+            // outputs elapsed time in milliseconds, like 40 [ms]
+        });
+
+        Bench::bench<std::chrono::microseconds>([&]{
+            // process to bench
+            // outputs elapsed time in microseconds, like 50 [us]
+            // Note: In VC2015+, std::chrono::high_resolution_clock is equivalent to QueryPerformanceCounter
+        });
+
+        Overhead of bench is at most 20 us in MacPro Late 2013 (3.7GHz Quad-Core Intel Xeon E5)
+     */
+    namespace Bench {
+        template <typename TimeT = std::chrono::milliseconds, typename F>
+        inline TimeT take_time(F &&f) {
+            const auto begin = std::chrono::high_resolution_clock::now();
+            f();
+            const auto end = std::chrono::high_resolution_clock::now();
+            return std::chrono::duration_cast<TimeT>(end - begin);
+        }
+
+        template<typename TimeT, typename F> struct BenchDelegate {
+            static long delegatedBenchFunc(F&& f){
+                const auto t = take_time<TimeT>(std::forward<F>(f));
+                std::chrono::duration<long, std::milli> t_ = t;
+                SPDLOG_INFO("{} [ms]", t_.count());
+                return t_.count();
+            }
+        };
+
+        template <typename TimeT = std::chrono::milliseconds, typename F>
+        inline long bench(F &&f) {
+            return BenchDelegate<TimeT, F>::delegatedBenchFunc(std::forward<F>(f));
+        }
     }
 }
 

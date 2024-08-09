@@ -6,13 +6,12 @@
 #define ISLAY_CONFIG_H
 
 #include <filesystem>
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
-#include "rapidjson/filewritestream.h"
-#include <rapidjson/prettywriter.h>
-
-#include <Eigen/Core>
 #include <string>
+#include <Eigen/Core>
+#include <rapidjson/document.h>
+#include <rapidjson/filereadstream.h>
+#include <rapidjson/filewritestream.h>
+#include <rapidjson/prettywriter.h>
 
 class Config {
 private:
@@ -23,7 +22,7 @@ private:
 
             // read
 #ifdef _MSC_VER
-			fp = fopen("../config/config_win_default.json", "rb");
+			fp = fopen("config_default.json", "rb");
 #else
 			fp = fopen("config_default.json", "rb");
 #endif

@@ -3,99 +3,61 @@
 //
 
 #include "Engine.h"
-#include "AppMsg.h"
-#include "Config.h"
-#include "Logger.h"
+#include "WorkerSample.h"
 
-namespace Bench {
-    template <typename TimeT = std::chrono::milliseconds, typename F>
-    inline TimeT take_time(F &&f) {
-        const auto begin = std::chrono::high_resolution_clock::now();
-        f();
-        const auto end = std::chrono::high_resolution_clock::now();
-        return std::chrono::duration_cast<TimeT>(end - begin);
-    }
-
-    template<typename TimeT, typename F> struct BenchDelegate {
-        static long delegatedBenchFunc(F&& f){
-            const auto t = take_time<TimeT>(std::forward<F>(f));
-            std::chrono::duration<long, std::milli> t_ = t;
-            printf("%ld [ms]\n", t_.count());
-            SPDLOG_INFO("{} [ms]", t_.count());
-            return t_.count();
-        }
-    };
-
-    template <typename TimeT = std::chrono::milliseconds, typename F>
-    inline long bench(F &&f) {
-        return BenchDelegate<TimeT, F>::delegatedBenchFunc(std::forward<F>(f));
-    }
-
+bool Engine::run() {
+    return true;
 }
 
+bool Engine::runWorkerSample() {
+    /**
+     * Register a worker with its name
+     */
+    registerWorker<WorkerSample>("WorkerSample");
 
-bool EngineOffline::run() {
+    /**
+     * You can pass a variable to the worker as a shared pointer.
+     */
+    std::shared_ptr<int> hoge(new int(123));
 
-    worker = std::thread([this] {
-        workerStatus.store(WORKER_STATUS::RUNNING);
-        /*
-         * Save config file as of run experiment
-         */
-        Config::get_instance().saveConfig();
-
-        /**
-         * Main process
-         * - You write your algorithm here.
-         * - You can access to config parameters via Config::get_instance().readXYZParam("PARAM"); (set functions are not thread safe for now)
-         */
-        cv::Mat lena(Config::get_instance().readIntParam("IMAGE_WIDTH"),
-                     Config::get_instance().readIntParam("IMAGE_HEIGHT"), CV_8UC3);
-        lena = cv::imread(
-                Config::get_instance().resourceDirectory() + "/" +
-                Config::get_instance().readStringParam("IMG_PATH"));
-        std::string imgName = Config::get_instance().readStringParam("IMG_NAME");
-
-        cv::Mat blurred_lena;
-        int numBlurredImage = 10;
-        auto time = Bench::bench([&] {
-            for (int i = 0; i < numBlurredImage; i++) {
-                int k = ceil(rand() % 5) * 8 + 1;
-                cv::GaussianBlur(lena, blurred_lena, cv::Size(k, k), 0);
-            }
-        });
-        cv::imwrite(Config::get_instance().resultDirectory() + Config::get_instance().readStringParam("BLURRED_IMG"),
-                    blurred_lena);
-        SPDLOG_DEBUG("Image processing for {} frames took {} ms.", numBlurredImage, time);
-
-        /**
-         * Show processed image
-         * - You can show cv::Mat img by simply adding
-         *     dm->pool["Name of window"] = img;
-         *   between prepareMsg() and send().
-         * - Images show up at the same location by default.
-         * - You can modify ImageTexture::setImage to show a cv::Mat whose format is not currently supported.
-         */
-        DispMsg *dm;
-        dm = appMsg->displayMessenger->prepareMsg();
-        dm->pool[imgName.c_str()] = lena;
-        dm->pool["blurred lena"] = blurred_lena;
-
-        appMsg->displayMessenger->send();
-        if (appMsg->displayMessenger->isClosed()) {
-//            break;
-        }
-        workerStatus.store(WORKER_STATUS::IDLE);
-    });
-
-
-//    reset();
+    /**
+     * Run the worker
+     */
+    runWorker("WorkerSample", hoge);
 
     return true;
 }
 
-bool EngineOffline::reset() {
-    if (worker.joinable()) {
-        worker.join();
-    }
+bool Engine::runWorkerSampleWithCpuBinding() {
+    /**
+     * Register a worker with its name
+     */
+    registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding_0");
+
+    /**
+     * You can pass a variable to the worker as a shared pointer.
+     */
+    std::shared_ptr<int> hoge(new int(123));
+
+    /**
+     * Run the worker with cpu binding
+     */
+    SPDLOG_INFO(puBinder->puListStr());
+
+    runWorkerWithCpuBinding("WorkerSampleWithCpuBinding_0", hoge);
+    std::this_thread::sleep_for(std::chrono::milliseconds (10));
+    SPDLOG_INFO(puBinder->puListStr());
+
+    registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding_1");
+    runWorkerWithCpuBinding("WorkerSampleWithCpuBinding_1");
+    std::this_thread::sleep_for(std::chrono::milliseconds (10));
+    SPDLOG_INFO(puBinder->puListStr());
+
+    registerWorker<WorkerSampleWithCpuBinding>("WorkerSampleWithCpuBinding_2");
+    runWorkerWithCpuBinding("WorkerSampleWithCpuBinding_2");
+    std::this_thread::sleep_for(std::chrono::milliseconds (10));
+    SPDLOG_INFO(puBinder->puListStr());
+
     return true;
+
 }
