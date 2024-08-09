@@ -56,15 +56,16 @@ bool EngineOffline::run() {
         std::string imgName = Config::get_instance().readStringParam("IMG_NAME");
 
         cv::Mat blurred_lena;
-        Bench::bench([&] {
-            for (int i = 0; i < 10000; i++) {
+        int numBlurredImage = 10;
+        auto time = Bench::bench([&] {
+            for (int i = 0; i < numBlurredImage; i++) {
                 int k = ceil(rand() % 5) * 8 + 1;
                 cv::GaussianBlur(lena, blurred_lena, cv::Size(k, k), 0);
             }
         });
         cv::imwrite(Config::get_instance().resultDirectory() + Config::get_instance().readStringParam("BLURRED_IMG"),
                     blurred_lena);
-
+        SPDLOG_DEBUG("Image processing for {} frames took {} ms.", numBlurredImage, time);
 
         /**
          * Show processed image
@@ -86,7 +87,6 @@ bool EngineOffline::run() {
         workerStatus.store(WORKER_STATUS::IDLE);
     });
 
-    SPDLOG_DEBUG("Image processing for a single frame done ...");
 
 //    reset();
 
