@@ -126,22 +126,25 @@ add_library(imgui SHARED
         3rdparty/imgui/imgui.cpp
         3rdparty/imgui/imgui_demo.cpp
         3rdparty/imgui/imgui_draw.cpp
+        3rdparty/imgui/imgui_tables.cpp
         3rdparty/imgui/imgui_widgets.cpp
-        3rdparty/imgui/examples/imgui_impl_sdl.cpp
-        3rdparty/imgui/examples/imgui_impl_opengl3.cpp
-        3rdparty/imgui/examples/libs/gl3w/GL/gl3w.c
+        3rdparty/imgui/backends/imgui_impl_sdl2.cpp
+        3rdparty/imgui/backends/imgui_impl_opengl3.cpp
+#        3rdparty/imgui/examples/imgui_impl_sdl.cpp
+#        3rdparty/imgui/examples/imgui_impl_opengl3.cpp
+#        3rdparty/imgui/examples/libs/gl3w/GL/gl3w.c
         # implot
         3rdparty/implot/implot.h
         3rdparty/implot/implot_internal.h
         3rdparty/implot/implot.cpp
         3rdparty/implot/implot_items.cpp
 )
-set_source_files_properties(imgui/examples/libs/gl3w/GL/gl3w.c PROPERTIES COMPILE_FLAGS -Wno-pedantic)
+#set_source_files_properties(imgui/examples/libs/gl3w/GL/gl3w.c PROPERTIES COMPILE_FLAGS -Wno-pedantic)
 
 target_include_directories(imgui PUBLIC
   3rdparty/imgui
-  3rdparty/imgui/examples
-  3rdparty/imgui/examples/libs/gl3w
+  3rdparty/imgui/backends
+#  3rdparty/imgui/examples/libs/gl3w
   ${SDL2_INCLUDE_DIRS}
   3rdparty/implot
 )
